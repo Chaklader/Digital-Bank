@@ -1,0 +1,39 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.slo
+*.lo
+*.la
+
+# Output of the Go coverage tool
+*.cover
+
+# Profile output
+*.prof
+
+# Dependency directories (uncomment if you check in your vendor directory)
+# vendor/
+
+# Ignore the go.mod and go.sum file if you're developing libraries
+# go.mod
+# go.sum
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
