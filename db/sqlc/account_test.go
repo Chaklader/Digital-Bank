@@ -39,6 +39,7 @@ func TestCreateAccount(t *testing.T) {
 func TestGetAccount(t *testing.T) {
 	account1 := createRandomAccount(t)
 	account2, err := testStore.GetAccount(context.Background(), account1.ID)
+
 	require.NoError(t, err)
 	require.NotEmpty(t, account2)
 
@@ -58,6 +59,7 @@ func TestUpdateAccount(t *testing.T) {
 	}
 
 	account2, err := testStore.UpdateAccount(context.Background(), arg)
+
 	require.NoError(t, err)
 	require.NotEmpty(t, account2)
 

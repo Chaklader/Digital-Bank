@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.22-alpine3.19 AS builder
+FROM golang:1.20-alpine3.19 AS builder
 WORKDIR /app
 COPY . .
 RUN go build -o main main.go
@@ -16,3 +16,6 @@ COPY db/migration ./db/migration
 EXPOSE 8080 9090
 CMD [ "/app/main" ]
 ENTRYPOINT [ "/app/start.sh" ]
+
+
+
