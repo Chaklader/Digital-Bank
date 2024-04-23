@@ -20,14 +20,12 @@ type Payload struct {
 }
 
 func NewPayload(username string, role string, duration time.Duration) (*Payload, error) {
-
 	tokenID, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
 
 	payload := &Payload{
-
 		ID:        tokenID,
 		Username:  username,
 		Role:      role,
@@ -37,6 +35,7 @@ func NewPayload(username string, role string, duration time.Duration) (*Payload,
 
 	return payload, nil
 }
+
 func (payload *Payload) Valid() error {
 	if time.Now().After(payload.ExpiredAt) {
 		return ErrExpiredToken
