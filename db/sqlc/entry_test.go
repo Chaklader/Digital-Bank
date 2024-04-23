@@ -1,8 +1,8 @@
 package db
 
 import (
-	"DigitalBank/util"
 	"context"
+	"github.com/Chaklader/DigitalBank/util"
 	"testing"
 	"time"
 

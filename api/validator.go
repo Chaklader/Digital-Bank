@@ -1,7 +1,7 @@
 package api
 
 import (
-	"DigitalBank/util"
+	"github.com/Chaklader/DigitalBank/util"
 	"github.com/go-playground/validator/v10"
 )
 

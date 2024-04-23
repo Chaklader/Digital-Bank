@@ -1,11 +1,11 @@
 package api
 
 import (
-	db "DigitalBank/db/sqlc"
-	"DigitalBank/token"
-	"DigitalBank/util"
 	"context"
 	"fmt"
+	db "github.com/Chaklader/DigitalBank/db/sqlc"
+	"github.com/Chaklader/DigitalBank/token"
+	"github.com/Chaklader/DigitalBank/util"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
@@ -43,14 +43,6 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 	return server, nil
 }
 
-func faviconMiddleware(c *gin.Context) {
-	if c.Request.URL.Path == "/favicon.ico" {
-		c.String(http.StatusOK, "")
-		c.Abort()
-	}
-	c.Next()
-}
-
 func (server *Server) setupRouter() {
 	router := gin.Default()
 	router.Use(faviconMiddleware)
@@ -72,10 +64,6 @@ func (server *Server) setupRouter() {
 
 func (server *Server) Start(address string) error {
 	return server.router.Run(address)
-}
-
-func (server *Server) helloWorld(context *gin.Context) {
-	context.String(http.StatusOK, "Hello, Seattle!")
 }
 
 func errorResponse(err error) gin.H {

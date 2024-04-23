@@ -1,13 +1,14 @@
 package db
 
 import (
-	"DigitalBank/util"
 	"context"
+	"github.com/Chaklader/DigitalBank/util"
 	"log"
 	"os"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/lib/pq"
 )
 
 var testStore Store

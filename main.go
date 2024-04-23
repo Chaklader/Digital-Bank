@@ -1,10 +1,9 @@
 package main
 
 import (
-	"DigitalBank/api"
-	db "DigitalBank/db/sqlc"
-	"DigitalBank/util"
 	"context"
+	"github.com/Chaklader/DigitalBank/api"
+	"github.com/Chaklader/DigitalBank/util"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -13,6 +12,9 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	db "github.com/Chaklader/DigitalBank/db/sqlc"
+	_ "github.com/lib/pq"
 )
 
 var interruptSignals = []os.Signal{
