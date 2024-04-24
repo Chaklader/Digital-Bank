@@ -33,7 +33,9 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 	}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		err := v.RegisterValidation("currency", validCurrency)
+		currencyTag := "currency"
+		err := v.RegisterValidation(currencyTag, validCurrency)
+
 		if err != nil {
 			return nil, err
 		}
@@ -47,11 +49,10 @@ func (server *Server) setupRouter() {
 	router := gin.Default()
 	router.Use(faviconMiddleware)
 
-	router.GET("/hello", server.helloWorld)
-	//router.POST("/users", server.createUser)
-	//router.POST("/users/login", server.loginUser)
+	router.POST("/users", server.createUser)
+	router.POST("/users/login", server.loginUser)
 	//router.POST("/tokens/renew_access", server.renewAccessToken)
-	//
+
 	//authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 	//authRoutes.POST("/accounts", server.createAccount)
 	//authRoutes.GET("/accounts/:id", server.getAccount)
