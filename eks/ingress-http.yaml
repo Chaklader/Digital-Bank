@@ -1,23 +1,44 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: simple-bank-ingress-http
+  name: digital-bank-ingress-http
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
 spec:
   ingressClassName: nginx
   rules:
-  - host: "api.simplebanktest.com"
-    http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: simple-bank-api-service
-            port:
-              number: 80
+    - host: "api.digitalbanktest.com"
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: digital-bank-api-service
+                port:
+                  number: 80
   tls:
-  - hosts:
-    - api.simplebanktest.com
-    secretName: simple-bank-api-cert
+    - hosts:
+        - api.digitalbanktest.com
+      secretName: digital-bank-api-cert
+
+
+#---
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  name: digital-bank-ingress
+#spec:
+#  rules:
+##    This is from the A record
+#    - host: "api.digital-bank.org"
+#      http:
+#        paths:
+#          - pathType: Prefix
+#            path: "/"
+#            backend:
+#              service:
+##  This comes from the metadata of the service
+#                name: digital-bank-api-service
+#                port:
+#                  number: 80
