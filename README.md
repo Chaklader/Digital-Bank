@@ -1,47 +1,46 @@
-## DIGITAL BANK
-
-## Database
-
-Enter inside the DB `simple_bank` in the docker container:
-
-```shell
-docker exec -it postgres psql -U root -d simple_bank
-```
-
-## Deploying the App to Production
-
-Before we proceed to the deployment in the production, we need to create a Dockerfile and build the docker image with
-the command:
-
-```shell
-docker build -t simplebank:latest . 
-```
-
-As the Postgres docker image is build with the `bank-network`, we can run the image with the command provide below:
-
-```shell
-docker run --name simplebank -p 8080:8080 --network=bank-network -e DB_SOURCE="postgresql://root:secret@postgres:5432/simple_bank?sslmode=disable"   -d simplebank:latest
-```
-
-
-
-
-## AWS
-
-![alt text](images/AWS-users.png)
-
-
-![alt text](images/Github-CI.png)
+# DIGITAL BANK
 
 <br>
 
-![alt text](images/Github-CI_2.png)
+## AWS: Users, Roles and Groups
 
-![alt text](images/deployment-User-group-permission.png)
+<br>
+
+An IAM user represents an individual or application that interacts with AWS services, and each user has unique security 
+credentials used to authenticate and access AWS resources. Users can be assigned permissions directly or through group 
+memberships, and they are typically used for individuals or applications that require long-term access to AWS resources.
+We create a new user named `GitHUB-CI` along with `chaklader` and will use that to manage the deployment process. 
 
 
-![alt text](images/DeploymentGroupEKSPolicy.png)
+<br>
 
+![AWS Users - Normal Ops and Deployment](images/AWS_Users.png)
+
+<br>
+
+![AWS_GitHUB_CI_User](images/AWS_GitHUB_CI_User.png)
+
+
+<br>
+
+After creating AWS users, it is necessary to install the AWS CLI (Command Line Interface) for managing operations through 
+the command line. Additionally, you will need to configure the access keys as outlined in the following steps:
+
+<br>
+
+```shell
+$ aws configure 
+$ cat ~/.aws/credentials 
+[default]
+aws_access_key_id = XXXXXXXXXXXX
+aws_secret_access_key = XXXXXXXXXXXX
+
+[github]
+aws_access_key_id = XXXXXXXXXXXX
+aws_secret_access_key = XXXXXXXXXXXX
+```
+
+<br>
 
 ```shell
 $ ls -l ~/.aws/
@@ -57,37 +56,74 @@ region = us-east-1
 output = json
 ```
 
-I use user `chaklader` usually but for the deployment we can use user Github. For the default we can create access key as the screenshot below 
+
+In my case, I use the IAM user `chaklader` to log in to the AWS console and create the resources like `RDS`, `ECR`, `EKS` etc
+and hence, I use the same credentials as the `default` section of the above `config` file. 
 
 
-![alt text](images/access_key.png)
+An IAM group is a collection of IAM users, and groups are used to simplify permissions management by assigning permissions 
+to a group rather than individual users. Users inherit the permissions assigned to the groups they belong to, and groups help 
+organize users based on their roles or responsibilities within an organization. The `Deployment` user group permission is 
+provided below and the user `GitHUB-CI` needs to be in the `Deployment` user group. I also put IAM user `chaklader` in the same
+group for testing purpose. 
 
-```shell
-$ cat ~/.aws/credentials 
-[default]
-aws_access_key_id = XXXXXXXXXXXX
-aws_secret_access_key = XXXXXXXXXXXX
+<br>
 
-[chaklader]
-aws_access_key_id = XXXXXXXXXXXX
-aws_secret_access_key = XXXXXXXXXXXX
+![Deployment_User_Group_Permissions](images/Deployment_User_Group_Permissions.png)
 
-[github]
-aws_access_key_id = XXXXXXXXXXXX
-aws_secret_access_key = XXXXXXXXXXXX
-```
+<br>
+
+The `DeploymentGroupEKSPolicy` is described in the `Deployment` user group in AWS dashboard:
+
+<br>
+
+![AWS_DeploymentGroupEKSPolicy_Permission](images/AWS_DeploymentGroupEKSPolicy_Permission.png)
+
+<br>
 
 
-# RDS
+## RDS
 
-Create the AWS Postgres DB and test it with Table plus if the remote connection is working. We need SSL enabled for the connection 
+<br>
 
-store the info in the AWS secret manager (other types of secrets)
+To create an AWS Postgres RDS instance named `digital-bank`, log in to the AWS Management Console, navigate to the RDS 
+service, and click on `Create database`. Choose `Standard Create`, select `PostgreSQL` as the engine, and specify the 
+desired version (e.g., `PostgreSQL 16.x-R1`). Configure the DB instance size (e.g., `db.t3.micro`), set the DB instance 
+identifier to `digital-bank`, and provide a master username and password. Choose the desired VPC (e.g., `default-vpc-0f6cf7d178eb0c8d8`) 
+and subnet group (e.g., `default-vpc-0f6cf7d178eb0c8d8`), and create a new security group or select an existing one. Set 
+the public accessibility option to `Yes` if needed. Configure additional settings such as backup retention period, 
+maintenance window, and encryption options. Click on `Create database` to initiate the RDS instance creation process. 
+Once created, retrieve the connection details (endpoint, port, username, and password) from the AWS Management Console. 
 
-We need the creation these secrets in the AWS secrets manager
+<br>
 
-![alt text](images/AWS-secret-manager.png)
+![alt text](images/RDS.png)
 
+<br>
+
+Configure the security group inbound rules to allow traffic on the PostgreSQL port (default: `5432`) from the desired IP 
+range or security group. Finally, update the application's database configuration to use the provided RDS connection details.
+Create the AWS Postgres DB and test it with Table plus if the remote connection is working. We need SSL enabled for the 
+connection
+
+<br>
+
+![alt text](images/RDS_SG_Inbound_Rules.png)
+
+<br>
+
+We have application secrets provided in the `app.env` file that we need to run server locally, and we need to save these 
+secrets in the AWS secrets manager with the production values as below. 
+
+<br>
+
+![alt text](images/Secret_Manager_Credentials.png)
+
+<br>
+
+
+Initially, the `SecretManagerReadWrite` policy was not included in the `deployment` user group and hence, we received the 
+error below:
 
 ```shell
 $ aws secretsmanager get-secret-value --secret-id digital_bank
@@ -96,7 +132,8 @@ $ aws secretsmanager get-secret-value --secret-id digital_bank
 not authorized to perform: secretsmanager:GetSecretValue on resource: digital_bank
 ```
 
-Add the permission for the AWS secret manager for the GitHUb-CI user using the `deployment` group 
+After we add the permission for the AWS Secret Manager for the GitHUb-CI user using the `deployment` group, we can read the 
+secrets as below:
 
 
 ```shell
@@ -113,17 +150,19 @@ $ aws secretsmanager get-secret-value --secret-id Digital_Bank
 }
 ```
 
-We need to provide these info in the `app.env` as part of the deployment procedure:
+We need to provide these info in the `app.env` as part of the deployment procedure as the same format with the command 
+below that will be included in the `deployment.yaml` pipeline. 
 
+<br>
 
 ```shell
 $ aws secretsmanager get-secret-value --secret-id Digital_Bank --query SecretString --output text | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]'
 
-DB_SOURCE=postgresql://root:OIJIWTiG508B54n88kA7@digital-bank.czzl3uwtdaas.us-east-1.rds.amazonaws.com:5432/digital_bank
+DB_SOURCE=postgresql://root:XXXXXXXXX@digital-bank.czzl3uwtdaas.us-east-1.rds.amazonaws.com:5432/digital_bank
 DB_DRIVER=postgres
 HTTP_SERVER_ADDRESS=0.0.0.0:8080
 GRPC_SERVER_ADDRESS=0.0.0.0:9090
-TOKEN_SYMMETRIC_KEY=48924940a30b055c3e01a873d05fcec7
+TOKEN_SYMMETRIC_KEY=XXXXXXXXX
 MIGRATION_URL=file://db/migration
 REDIS_ADDRESS=0.0.0.0:6379
 EMAIL_SENDER_NAME=Digital_Bank
@@ -131,12 +170,47 @@ EMAIL_SENDER_ADDRESS=digitalbanktest@gmail.com
 EMAIL_SENDER_PASSWORD=jekfcygyenvzekke
 ```
 
+<br>
+
+
+## GitHub Repository Secrets 
+
+<br>
+
+GitHub repo secrets are encrypted environment variables that you can store in a repository on GitHub. These secrets can contain
+sensitive information, such as access tokens, API keys, or other credentials, and can be used in GitHub Actions workflows
+to securely access external services or resources. Secrets are securely encrypted and can only be accessed by the repository
+they are stored in, ensuring that sensitive data is kept confidential and cannot be accessed by unauthorized parties. Using
+secrets in your workflows allows you to avoid hard-coding sensitive information in your code, which can improve the security
+and maintainability of your projects. We need to set the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` GitHUB repository  
+secrets from the settings page of the repository.
+
+<br>
+
+![alt text](images/Github_Repo_Secrets_AWS.png)
+
+<br>
+
+## Dockerfile
+
+<br>
+
+As part of the deployment procedure, we create a `Dockerfile` and put that inside the root of the project. This Dockerfile 
+has `2` stages: the `build` stage and the `run` stage. The `build` stage starts from the `golang:1.20-alpine3.19` base image, 
+sets the working directory to `/app`, copies the source code, and runs `go build` to compile the Go application into an 
+executable binary named `main`. The run stage starts from the `alpine:3.19` base image, copies the compiled `main` 
+executable and other files (`app.env`, `start.sh`, `wait-for.sh`, and the `db/migration` directory) to the `/app` directory, 
+exposes ports 8080 and 9090, sets the default command to run the `main` executable, and sets the entrypoint to execute the `start.sh` 
+script when the container starts. This Dockerfile is likely used for building and running a Go application in a containerized 
+environment.
+
+<br>
+
+
 ## ECR
 
 
-Set the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` repo secrets in the GitHub settings 
 
-![alt text](images/github-secrets.png)
 
 
 Create a repository in the AWS ECR and run the  `.github/workflows/deploy.yaml` to push the image to the ECR repo. Now the image is ready 
