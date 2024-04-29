@@ -1,8 +1,11 @@
 # DIGITAL BANK
 
+
+## Deployment 
+
 <br>
 
-## AWS: Users, Roles and Groups
+### AWS: Users, Roles and Groups
 
 <br>
 
@@ -82,7 +85,7 @@ The `DeploymentGroupEKSPolicy` is described in the `Deployment` user group in AW
 <br>
 
 
-## RDS
+### RDS
 
 <br>
 
@@ -173,7 +176,7 @@ EMAIL_SENDER_PASSWORD=jekfcygyenvzekke
 <br>
 
 
-## GitHub Repository Secrets 
+### GitHub Repository Secrets 
 
 <br>
 
@@ -191,7 +194,7 @@ secrets from the settings page of the repository.
 
 <br>
 
-## Dockerfile
+### Dockerfile
 
 <br>
 
@@ -207,11 +210,51 @@ environment.
 <br>
 
 
-## ECR
+### Elastic Container Registry (ECR)
+
+<br>
+
+AWS Elastic Container Registry (ECR) is a fully-managed Docker container registry service provided by Amazon Web Services (AWS). 
+It allows you to store, manage, and deploy Docker container images securely and efficiently. With ECR, you can push, pull, 
+and manage your Docker images from anywhere using the Docker command-line interface or your preferred continuous integration 
+and continuous deployment (CI/CD) tools. ECR integrates seamlessly with other AWS services, such as Amazon Elastic Kubernetes 
+Service (EKS), Amazon Elastic Container Service (ECS), and AWS Lambda, making it a convenient choice for containerized 
+application deployments on the AWS platform. For the deployment purpose, we created a ECR repository named `digitalbank` 
+in the ECR as shown below. 
+
+<br>
+
+![alt text](images/ECR.png)
+
+<br>
 
 
+### GitHub Actions 
 
+<br>
 
+GitHub Actions is a continuous integration and continuous deployment (CI/CD) platform provided by GitHub. It allows you to 
+automate your software development workflows, such as building, testing, and deploying your code directly from your GitHub 
+repository. You can define custom workflows using YAML syntax, which specify the events that trigger the workflow, the 
+jobs to be executed, and the steps within each job. We use GitHub Actions to manage the testing and deployment procedure 
+in the AWS cloud infrastructure. 
+
+<br>
+
+### Testing 
+
+<br>
+
+We have GitHub Action workflow created in the file named `.github/workflows/test.yaml` which is designed to run unit tests for 
+a Go project. It is triggered whenever code is pushed to the main branch or a pull request is created against the main branch. 
+The workflow runs on an Ubuntu runner and includes a PostgreSQL service for testing purposes. The steps involve setting up the 
+Go environment, checking out the code, installing the golang-migrate tool, running database migrations using make migrateup, 
+and finally executing the unit tests using make test. This workflow helps ensure that the codebase passes all tests before 
+merging changes into the main branch.
+
+<br>
+
+## Deployment 
 
 Create a repository in the AWS ECR and run the  `.github/workflows/deploy.yaml` to push the image to the ECR repo. Now the image is ready 
 and we can pull after login to the docker. We need to Login to the docker before we can pull the image:
