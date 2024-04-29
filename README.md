@@ -31,7 +31,7 @@ the command line. Additionally, you will need to configure the access keys as ou
 
 <br>
 
-```shell
+```textmate
 $ aws configure 
 $ cat ~/.aws/credentials 
 [default]
@@ -45,14 +45,14 @@ aws_secret_access_key = XXXXXXXXXXXX
 
 <br>
 
-```shell
+```textmate
 $ ls -l ~/.aws/
 total 16
 -rw-------  1 chaklader  staff   43 Apr 26 15:02 config
 -rw-------  1 chaklader  staff  351 Apr 27 08:37 credentials
 ```
 
-```shell
+```textmate
 $ cat ~/.aws/config 
 [default]
 region = us-east-1
@@ -128,7 +128,7 @@ secrets in the AWS secrets manager with the production values as below.
 Initially, the `SecretManagerReadWrite` policy was not included in the `deployment` user group and hence, we received the 
 error below:
 
-```shell
+```textmate
 $ aws secretsmanager get-secret-value --secret-id digital_bank
 
 "An error occurred (AccessDeniedException) when calling the GetSecretValue operation: User: arn:aws:iam::095420225548:user/github-ci is 
@@ -139,7 +139,7 @@ After we add the permission for the AWS Secret Manager for the GitHUb-CI user us
 secrets as below:
 
 
-```shell
+```textmate
 $ aws secretsmanager get-secret-value --secret-id Digital_Bank
 {
     "ARN": "arn:aws:secretsmanager:us-east-1:366655867831:secret:Digital_Bank-UZysxN",
@@ -158,7 +158,7 @@ below that will be included in the `deployment.yaml` pipeline.
 
 <br>
 
-```shell
+```textmate
 $ aws secretsmanager get-secret-value --secret-id Digital_Bank --query SecretString --output text | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]'
 
 DB_SOURCE=postgresql://root:XXXXXXXXX@digital-bank.czzl3uwtdaas.us-east-1.rds.amazonaws.com:5432/digital_bank
@@ -241,7 +241,109 @@ in the AWS cloud infrastructure.
 
 <br>
 
-### Testing 
+
+## Elastic Kubernetes Service (EKS)
+
+<br>
+
+AWS EKS (Elastic Kubernetes Service) is a managed service that simplifies deploying, managing, and operating Kubernetes
+clusters on AWS. An EKS cluster consists of a control plane managed by AWS and worker nodes managed by the user. The
+control plane is responsible for managing the Kubernetes cluster and scheduling applications to run on the worker nodes.
+Worker nodes are Amazon EC2 instances that run containerized applications and are registered to the EKS cluster. The worker
+nodes can be configured with the desired compute, storage, and networking resources to suit the application's needs. AWS
+EKS integrates with other AWS services like VPC, IAM, and Elastic Load Balancing to provide a secure and highly available
+environment for running containerized workloads. For the deployment, we created a cluster named `digital-bank` as shown
+below.
+
+<br>
+
+![alt text](images/EKS_Cluster.png)
+
+<br>
+
+To create the EKS cluster, we need to create an EKS cluster service role which is an IAM role that needs to be created and
+associated with the EKS cluster during its creation. This role allows the EKS control plane to manage and interact with
+other AWS services on your behalf, such as creating and managing worker nodes, managing load balancers, and accessing other
+resources required for the proper functioning of the EKS cluster. It is recommended to create a dedicated role with the
+necessary permissions for the EKS cluster to ensure secure and controlled access to AWS resources.
+
+<br>
+
+![alt text](images/EKS_Cluster_Service_Role.png)
+
+<br>
+
+To create the EKS Open the IAM console and navigate to the Roles section, then select Create role. Under Trusted entity
+type, choose AWS service. From the Use cases for other AWS services dropdown list, select EKS, and for your use case,
+choose EKS - Cluster, then click Next. On the Add permissions tab, proceed to the next step by clicking Next again. For
+Role name, enter a unique name for your role, such as eksClusterRole. Provide a descriptive text for the Description field,
+for example, `Amazon EKS - Cluster role`. Finally, review the details and choose Create role to create the Amazon EKS cluster
+role in the IAM console.
+
+<br>
+
+Now, we need to add the EKS worker nodes to the cluster - EKS worker nodes are the compute resources within an Amazon EKS
+cluster that run the containerized applications and workloads. These worker nodes are Amazon EC2 instances that are registered
+to the EKS cluster and managed by the control plane. The worker nodes are responsible for running the Kubernetes node
+components, such as the kubelet and kube-proxy, which facilitate communication between the control plane and the containers
+running on the nodes. Workers nodes can be configured with the desired compute, storage, and networking resources based
+on the application's requirements. They can be launched as part of an Auto Scaling group to automatically scale the cluster
+capacity based on the workload demands. We can use the `Add Node Group` button below to append the worker nodes.
+
+
+<br>
+
+![alt text](images/EKS_Add_Worker_Node.png)
+
+<br>
+
+For the EKS worker node group, we need to create a new IAM role named `AWSEKSNodeRole` with the following policies:
+
+1. AmazonEKS_CNI_Policy
+2. AmazonEKSWorkerNodePolicy
+3. AmazonEC2ContainerRegistryReadOnly
+
+<br>
+
+![alt text](images/EKS_Worker_Node_IAM.png)
+
+<br>
+
+![alt text](images/EKS_Worker_Node_IAM_APPEND.png)
+
+<br>
+
+When configuring an Amazon EKS worker node group, the EC2 instance type selected plays a crucial role in determining the
+number of pods that can be run on each worker node. The instance type defines the maximum network interfaces and the number
+of private IPv4 and IPv6 addresses per interface, as shown in the provided table. Additionally, the "eni-max-pods.txt" file
+from the AWS labs repository contains a mapping that calculates the maximum number of pods per instance type based on the
+available network interfaces and IP addresses. This information helps in selecting the appropriate instance type and configuring
+the desired, minimum, and maximum number of worker nodes in the node group to meet the application's resource requirements
+and ensure efficient pod scheduling within the EKS cluster.
+
+It informs about the maximum number of pods that can be supported by different EC2 instance types when using Amazon EKS (Elastic
+Kubernetes Service). It explains the formula used to calculate the maximum number of pods for each EC2 instance type. The formula is:
+
+```textmate
+# of ENI * (# of IPv4 per ENI - 1) + 2
+```
+
+The file provides a link to the AWS documentation for more information on using the formula. Finally, the file lists various EC2
+instance types and their corresponding maximum number of pods that can be supported. For example, `a1.2xlarge` can support `58` pods,
+while `c3.4xlarge` can support `234` pods.
+
+<br>
+
+![alt text](images/EKS_Pods_Per_EC2_Instance.png)
+
+<br>
+
+![alt text](images/EKS_Pods_Per_EC2_Instance_APPEND.png)
+
+<br>
+
+
+### Testing via GitHub Actions 
 
 <br>
 
@@ -254,75 +356,86 @@ merging changes into the main branch.
 
 <br>
 
-## Deployment 
+## Deployment via GitHub Actions
 
-Create a repository in the AWS ECR and run the  `.github/workflows/deploy.yaml` to push the image to the ECR repo. Now the image is ready 
-and we can pull after login to the docker. We need to Login to the docker before we can pull the image:
 
-```shell
-aws ecr get-login-password \
+We have GitHub Action workflow created in the file named `.github/workflows/deploy.yaml` which is designed to run unit tests for
+a Go project. The initial version is to create the docker image in the ECR and provided below:
+
+
+```yaml
+
+name: Deploy to PROD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+
+  deploy:
+    name: Build image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Load secrets and save to app.env
+        run: aws secretsmanager get-secret-value --secret-id Digital_Bank --query SecretString --output text | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' > app.env
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: digitalbank
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
+
+```
+
+After we push the code to the `main` branch, the CI/CD pipeline will run and docker image will be pushed to the ECR as below.
+
+<br>
+
+![alt text](images/ECR_Docker_Image.png)
+
+<br>
+
+Now the image is ready, and we can pull after login to the docker. We need to log in to the docker before we can pull the image:
+
+```textmate
+$ aws ecr get-login-password \
     --region us-east-1 \
 | docker login \
     --username AWS \
     --password-stdin 366655867831.dkr.ecr.us-east-1.amazonaws.com
 ```
 
-Run the image locally to test it:
+Run the image locally and can test it using the Postman:  
 
-
-```shell
-docker run -p 8080:8080 366655867831.dkr.ecr.us-east-1.amazonaws.com/digitalbank:latest
+```textmate
+$ docker pull 366655867831.dkr.ecr.us-east-1.amazonaws.com/digitalbank:latest
+$ docker run -p 8080:8080 366655867831.dkr.ecr.us-east-1.amazonaws.com/digitalbank:latest
 ```
 
+-- Now, make sure the GitHub-CI user can deploy 
 
 
-## Create EKS cluster
 
-
-![alt text](images/eks_cluster.png)
-
-
-Creating the Amazon EKS cluster role 
-
-![alt text](images/eks_cluster_service_ROLE.png)
-
-To create your Amazon EKS cluster role in the IAM console
-
-
-1. Open the IAM console 
-2. Choose Roles, then Create role.
-3. Under Trusted entity type, select AWS service.
-4. From the Use cases for other AWS services dropdown list, choose EKS.
-5. Choose EKS - Cluster for your use case, and then choose Next.
-6. On the Add permissions tab, choose Next.
-7. For Role name, enter a unique name for your role, such as eksClusterRole.
-8. For Description, enter descriptive text such as Amazon EKS - Cluster role.
-9. Choose Create role.
-
-
-- Add worker node to the cluster 
-
-![alt text](images/eks_add_worker_node.png)
-
-
-- Add EKS Node groups and we need to create a new IAM role for this - The EC2 instance used decide how many pods we can run there
-
-![alt text](images/worker_node_iam_group.png)
-
-We need 3 plocies for the IAM role:
-
-```shell
-AmazonEKS_CNI_Policy
-AmazonEKSWorkerNodePolicy
-AmazonEC2ContainerRegistryReadOnly
-```
-
-![alt text](images/AWSEKSNodeRole.png)
-
-<br>
-
-
-```shell
+```textmate
 $ kubectl cluster-info
 Kubernetes control plane is running at https://E44AED5442512EC56EA2BFBD88920895.gr7.us-east-1.eks.amazonaws.com
 CoreDNS is running at https://E44AED5442512EC56EA2BFBD88920895.gr7.us-east-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
@@ -331,17 +444,17 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 ```
 
 
-```shell
+```textmate
 $ aws eks update-kubeconfig --name digital-bank --region us-east-1
 Updated context arn:aws:eks:us-east-1:366655867831:cluster/digital-bank in /Users/chaklader/.kube/config
 ```
 
-```shell
+```textmate
 $ kubectl config use-context arn:aws:eks:us-east-1:366655867831:cluster/digital-bank
 Switched to context "arn:aws:eks:us-east-1:366655867831:cluster/digital-bank".
 ```
 
-```shell
+```textmate
 $ cat ~/.kube/config 
 apiVersion: v1
 clusters:
@@ -449,16 +562,6 @@ deployment.apps/digital-bank-api-deployment created
 ```
 
 
-It informs about the maximum number of pods that can be supported by different EC2 instance types when using Amazon EKS (Elastic 
-Kubernetes Service). It explains the formula used to calculate the maximum number of pods for each EC2 instance type. The formula is:
-
-```shell
-# of ENI * (# of IPv4 per ENI - 1) + 2
-```
-
-The file provides a link to the AWS documentation for more information on using the formula.
-
-Finally, the file lists various EC2 instance types and their corresponding maximum number of pods that can be supported. For example, a1.2xlarge can support 58 pods, while c3.4xlarge can support 234 pods.
 
 Delete the existing deployments in the k9s and then <d>
 
@@ -469,8 +572,6 @@ $ services
 ```
 
 
-![alt text](images/ip_addresses.png)
-![alt text](images/ip_addresses_1.png)
 
 In order to access the Kubernetes resources from the outside, we need to deploy the service as below:
 
