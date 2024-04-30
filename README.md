@@ -1337,7 +1337,9 @@ Now, in the `K9s` console, we can check that the TLS is enabled:
 
 <br>
 
-The request should work between the client and server securely with the host `api.digitalbanktoday.com` as before. 
+The request should work between the client and server securely with the host `api.digitalbanktoday.com` as before. When we
+push the code to the `main` branch, the CI/CD pipeline will start using the `.github/workflows/deploy.yaml` and it will 
+be deployed as same when we run using the terminal. 
 
 
 
