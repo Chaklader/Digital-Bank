@@ -38,6 +38,10 @@ $ cat ~/.aws/credentials
 aws_access_key_id = XXXXXXXXXXXX
 aws_secret_access_key = XXXXXXXXXXXX
 
+[arefe]
+aws_access_key_id = XXXXXXXXXXXX
+aws_secret_access_key = XXXXXXXXXXXX
+
 [github]
 aws_access_key_id = XXXXXXXXXXXX
 aws_secret_access_key = XXXXXXXXXXXX
@@ -431,28 +435,51 @@ $ docker pull 366655867831.dkr.ecr.us-east-1.amazonaws.com/digitalbank:latest
 $ docker run -p 8080:8080 366655867831.dkr.ecr.us-east-1.amazonaws.com/digitalbank:latest
 ```
 
--- Now, make sure the GitHub-CI user can deploy 
+Now, we can check the AWS user with the command and see the current username is `GitHUB-CI`
 
+```shell
+$ aws sts get-caller-identity
 
+{
+    "UserId": "AIDAVKXTERO32BYHSFV6L",
+    "Account": "366655867831",
+    "Arn": "arn:aws:iam::366655867831:user/GitHUB-CI"
+}
+```
+
+As we didn't use this user to create the EKS resources, we can't retrieve the cluster info and pods info using the commands
+provided below.  
+
+<br>
 
 ```textmate
 $ kubectl cluster-info
-Kubernetes control plane is running at https://E44AED5442512EC56EA2BFBD88920895.gr7.us-east-1.eks.amazonaws.com
-CoreDNS is running at https://E44AED5442512EC56EA2BFBD88920895.gr7.us-east-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
-To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+$ kubectl get pods
 ```
 
+<br>
+
+So, we need to revert to the original user `chaklader` that created these resources and then, we can find these info. 
+We need to update the configuration and use the correct context before we proceed. 
+
+<br>
 
 ```textmate
 $ aws eks update-kubeconfig --name digital-bank --region us-east-1
 Updated context arn:aws:eks:us-east-1:366655867831:cluster/digital-bank in /Users/chaklader/.kube/config
 ```
 
+<br>
+
 ```textmate
 $ kubectl config use-context arn:aws:eks:us-east-1:366655867831:cluster/digital-bank
 Switched to context "arn:aws:eks:us-east-1:366655867831:cluster/digital-bank".
 ```
+
+Now, we can find the updated configuration, cluster info and pods with the commands provided below.
+
+<br>
 
 ```textmate
 $ cat ~/.kube/config 
@@ -487,36 +514,34 @@ users:
       command: aws
 ```
 
-Provide the EKS full permission for the GitHUB-CI user as this user needs to access the Kubernetes Cluster and manage the deployment 
+<br>
 
+```textmate
+$ kubectl cluster-info
+Kubernetes control plane is running at https://E44AED5442512EC56EA2BFBD88920895.gr7.us-east-1.eks.amazonaws.com
+CoreDNS is running at https://E44AED5442512EC56EA2BFBD88920895.gr7.us-east-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
-```shell
-$ aws sts get-caller-identity
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+```
 
-{
-    "UserId": "AIDAVKXTERO32BYHSFV6L",
-    "Account": "366655867831",
-    "Arn": "arn:aws:iam::366655867831:user/GitHUB-CI"
-}
+<br>
+
+```textmate
+$ kubectl get pods
+NAME                                           READY   STATUS    RESTARTS   AGE
+cm-acme-http-solver-gxzpw                      1/1     Running   0          2d3h
+digital-bank-api-deployment-57c7b975cf-g29j7   1/1     Running   0          2d6h
+digital-bank-api-deployment-57c7b975cf-p69qr   1/1     Running   0          2d6h
 ```
 
 
+Let's create a file `eks/aws-auth.yaml` to provide the EKS full permission for the GitHUB-CI user as this user needs to 
+access the Kubernetes Cluster and manage the deployment. 
 
-$ kubectl get pods
-
-$ export AWS_PROFILE=github
-Chakladers-MacBook-Pro:Desktop chaklader$ kubectl get pods
-
-Chakladers-MacBook-Pro:Desktop chaklader$ export AWS_PROFILE=default
-Chakladers-MacBook-Pro:Desktop chaklader$ kubectl get pods
-
-
-
-Provide the EKS full permission for the GitHUB-CI user as this user needs to access the Kubernetes Cluster and manage the deployment.
-First, use the default user and then apply the YAML to the cluster as below:
-
+<br>
 
 ```yaml
+
 apiVersion: v1 
 kind: ConfigMap 
 metadata: 
@@ -528,102 +553,101 @@ data:
       username: GitHUB-CI
       groups:
         - system:masters
+
 ```
 
+To do that, we need to use the default user `chaklader` and then apply the `eks/aws-auth.yaml` to the cluster as below:
 
 
-```shell
+
+<br>
+
+```textmate
+
+$ export AWS_PROFILE=chaklader
+
 $ kubectl apply -f eks/aws-auth.yaml
-configmap/aws-auth unchanged
-
-$ kubectl get pods
 ```
 
-```shell
-$ brew install k9s 
-```
+Now, the user `GitHUB-CI` is ready to manage the deployment process and the cluster info and pods can be seen in the CLI 
+as before with the default user. We run the `eks/deployment.yaml` for deployment as provided. We can see the deployment 
+the `K9s` console as provided. 
 
-In the K9s console, use:
-
-```shell
-$ configmap
-```
-
-In Kubernetes, a Service is a method for exposing a network application that is running as one or more Pods in your
-cluster. A key aim of Services in Kubernetes is that you don't need to modify your existing application to use an unfamiliar
-service discovery mechanism. You can run code in Pods, whether this is a code designed for a cloud-native world, or an older app
-you've containerized. You use a Service to make that set of Pods available on the network so that clients can interact with it.
-
-
-
-```shell
+```textmate
 $ kubectl apply -f eks/deployment.yaml
+
 deployment.apps/digital-bank-api-deployment created
 ```
 
+<br>
 
+```yaml
 
-Delete the existing deployments in the k9s and then <d>
-
-
-```shell
-$ deployments 
-$ services
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: digital-bank-api-deployment
+  labels:
+    app: digital-bank-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: digital-bank-api
+  template:
+    metadata:
+      labels:
+        app: digital-bank-api
+    spec:
+      containers:
+        - name: digital-bank-api
+          image: 366655867831.dkr.ecr.us-east-1.amazonaws.com/digitalbank:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
 ```
 
 
+<br>
 
-In order to access the Kubernetes resources from the outside, we need to deploy the service as below:
-
-```shell
-$ kubectl apply -f eks/service.yaml
-service/digital-bank-api-service configured
-```
-
-
-![alt text](images/service.png)
-
-Purchase domain name from the AWS Route 53
-
-![alt text](images/default.png)
-
-Route 53 -> Hosted Zones -> Records -> Domain Name and we will find the list of DNS records (NS and SOA)
-
-We will already have 2 records - NS and SOA and need to create an A record
-
-![alt text](images/records.png)
+![alt text](images/Deployed_EKS_Cluster.png)
 
 <br>
 
-![alt text](images/before_A_record.png)
+![alt text](images/Deployed_EKS_Cluster_APPEND.png)
 
 <br>
 
-![alt text](images/ns_lookup_before_A-record.png)
+In Kubernetes, a Service is a method for exposing a network application that is running as one or more Pods in your
+cluster. A key aim of Services in Kubernetes is that you don't need to modify your existing application to use an unfamiliar
+service discovery mechanism. We can run code in Pods, whether this is a code designed for a cloud-native world, or an older app
+you've containerized. We use a Service to make that set of Pods available on the network so that clients can interact with it.
 
-Use the LOad balancer IP in the A record
+A Kubernetes service is an abstraction that defines a logical set of pods and a policy for accessing them. It acts as a load 
+balancer and provides a stable IP address and DNS name for the pods that are part of the service. The service ensures that 
+traffic is evenly distributed across the pods, and it also handles scenarios where pods are added or removed, ensuring that 
+the service remains available. The deployment, on the other hand, is responsible for creating and managing the pods that run 
+your application containers. It ensures that the desired number of replicas are running and automatically handles rolling updates 
+and rollbacks. Here's why the service needs to be deployed after the deployment:
 
-![alt text](images/create_A_Record.png)
+- Pod Selection: The service uses label selectors to identify the pods it should proxy traffic to. These labels are defined in 
+the deployment's pod template. If the service is created before the deployment, there won't be any pods matching the label 
+selectors, and the service won't have any endpoints to forward traffic to.
 
-![alt text](images/create_A_Record_2.png)
+- Service Discovery: Services provide a stable DNS name and IP address for the pods they represent. If the service is created 
+before the pods, there won't be any pods to provide these details for, and other components won't be able to discover and 
+connect to the application.
 
-![alt text](images/ns_lookup_after_A-record.png)
+- Load Balancing: The service acts as a load balancer, distributing traffic across the pods. If the service is created before 
+the pods, there won't be any pods to load balance the traffic to.
 
-Create Record - A record and use the EXTERNAL-IP for the service for the route to traffic field
+By deploying the service after the deployment, you ensure that the pods are running and ready to receive traffic before 
+the service is created. This way, the service can correctly identify the pods, provide service discovery, and load balance 
+the traffic across the available pods. In order to access the Kubernetes resources from the outside, we need to deploy the 
+service `eks/service.yaml` as below:
 
-Ingress
 
-An API object that manages external access to the services in a cluster, typically HTTP.
-
-Ingress may provide load balancing, SSL termination and name-based virtual hosting.
-
-Ingress exposes HTTP and HTTPS routes from outside the cluster to services within the cluster. Traffic routing is
-controlled
-by rules defined on the Ingress resource.
-
-Before proceeding to the Ingress, change the type of the `service.yaml` to ClusterIP from LoadBalancer
-
-We had this before `service.yaml`:
+<br>
 
 ```yaml
 apiVersion: v1
@@ -640,7 +664,120 @@ spec:
   type: LoadBalancer
 ```
 
-We need to change it to:
+<br>
+
+```textmate
+$ kubectl apply -f eks/service.yaml
+
+service/digital-bank-api-service configured
+```
+
+<br>
+
+![alt text](images/EKS_Service.png)
+
+<br>
+
+In the image above, we can see the service is deployed but the `TYPE` is `ClusterIP` and there is `EXTERNAL-IP` so the Kubernetes
+resources can't be access from the outside by us. We can change the `TYPE` to `LoadBalancer`, re-deploy and acquire an `EXTERNAL-IP`
+identified as `acefda17bec1049e48640f98a99c2653-885218934.us-east-1.elb.amazonaws.com` below and this host name can be used 
+for regular requests as we did with the `localhost`. 
+
+<br>
+
+![alt text](images/EKS_Service_APPEND.png)
+
+<br>
+
+![alt text](images/EKS_Service_URL_NS_LOOKUP_Before_A_RECORD.png)
+
+<br>
+
+![alt text](images/EKS_Service_URL.png)
+
+<br>
+
+### AWS Route 53
+
+<br>
+
+We would like to use a dedicated domain for the deployment process and will use AWS Route 53 for the purpose. AWS Route 53 
+is a highly available and scalable cloud Domain Name System (DNS) web service provided by Amazon Web Services (AWS). It allows 
+to manage domain names, route end-user requests to internet applications by translating domain names into IP addresses, and 
+perform health checks to monitor the availability of your application resources. Route 53 integrates with other AWS services, 
+providing reliable and cost-effective domain name management and traffic routing capabilities for your applications running on 
+AWS or on-premises infrastructure.
+
+Route 53 has several key components that allow to manage and route traffic to the resources:
+
+- Record Name: This is the domain or subdomain name for which you want to define routing rules.
+
+- Record Type: This specifies the type of DNS record, such as A (IPv4 address), AAAA (IPv6 address), CNAME (alias for 
+another domain name), or MX (mail exchange record).
+
+- Route Traffic To: This defines the resource (e.g., EC2 instance, load balancer, or S3 bucket) to which Route 53 should 
+route traffic for the specified record name and type.
+
+- Routing Policy**: This determines how Route 53 responds to queries for the record and how it routes traffic to the resources. 
+Options include simple, failover, geolocation, latency, multivalue answer, and weighted routing policies.
+
+
+There are some concepts needs for Route 53 and are essential for managing domain names and DNS settings.
+
+- DNS Settings: Route 53 allows you to configure DNS settings, such as specifying the authoritative nameservers for domain 
+and managing resource record sets.
+
+- Domain Nameserver Registrations: When you register a domain with Route 53, it automatically assigns four AWS nameservers to 
+your domain, which are used to route traffic to your resources.
+
+- DNSSEC: Route 53 supports DNSSEC, which adds a layer of security to DNS by digitally signing DNS data to protect against 
+data spoofing and man-in-the-middle attacks. This ensures the authenticity and integrity of your DNS data.
+
+- A Record: An A record (short for Address record) is a type of DNS record that maps a domain name to an IPv4 address. It 
+is one of the most common and essential record types in the Domain Name System (DNS). IP Address Resolution: When a user or 
+client attempts to access a website or web application by entering a domain name (e.g., example.com) in a web browser, the 
+DNS system needs to translate that domain name into an IP address that the computer can understand. The A record provides 
+this mapping between the domain name and the corresponding IPv4 address.
+
+<br>
+
+
+After purchasing a domain name, we need to set up an A record in Route 53's hosted zone to map the domain name to the IP address 
+of the web server or load balancer. We need to Create a hosted zone in Route 53 for the domain name if we haven't already. 
+By default, Route 53 creates NS (Name Server) and SOA (Start of Authority) records for the hosted zone. Next, we need to create 
+an A record within the hosted zone, specifying your domain name (e.g., example.com or www.example.com) as the Record Name, and the 
+public IP address of your web server or load balancer (for our case) as the Value. This A record will resolve your domain name to the 
+specified IP address, allowing visitors to access the website or application hosted on that server. 
+
+
+<br>
+
+![alt text](images/Route_53_A_Record_CREATE.png)
+
+<br>
+
+![alt text](images/Route_53_DASHBOARD.png)
+
+<br>
+
+[//]: # (TODO: The image above needs update with the A Record)
+
+![alt text](images/EKS_Service_URL_NS_LOOKUP_After_A_RECORD.png)
+
+<br>
+
+
+### Kubernetes Ingress
+
+
+Kubernetes Ingress is a collection of rules that allow inbound connections to reach the cluster services. It acts as a 
+single entry point for incoming traffic, routing it to the appropriate services based on configured rules. Ingress is 
+needed in Kubernetes to expose services externally, enabling external clients to access applications running inside the 
+cluster. It provides features like load balancing, SSL/TLS termination, and name-based virtual hosting, making it easier 
+to manage and secure incoming traffic to services in a Kubernetes cluster. Ingress exposes HTTP and HTTPS routes from outside 
+the cluster to services within the cluster. Traffic routing is controlled by rules defined on the Ingress resource.
+
+Before proceeding to the Ingress, change the type of the `eks/service.yaml` to `ClusterIP` from `LoadBalancer`:
 
 ```yaml
 apiVersion: v1
@@ -657,7 +794,7 @@ spec:
   type: ClusterIP
 ```
 
-The `ingress.yaml` is provided below:
+We need to deploy the `eks/service.yaml` and then, need to deploy the `eks/ingress.yaml` as provided below:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -681,58 +818,95 @@ spec:
                   number: 80
 ```
 
-```shell
+<br>
 
+```textmate
 $ kubectl apply -f eks/service.yaml
- 
+
 $ kubectl apply -f eks/ingress.yaml
 ```
 
-We have ClusterIP in the deployed service NOW - look for service and ingress in the K9s console
+<br>
 
-![alt text](images/service_ClusterIP.png)
+We have ClusterIP in the deployed service by now, and we can look for service and ingress in the K9s console:
 
 <br>
 
-![alt text](images/ingress_initial_deploy.png)
+![alt text](images/EKS_Service_ClusterIP.png)
 
-Ingress is sending the traffic to the `digital-bank-api-service`:
+<br>
 
-![alt text](images/ingress_send_traffic_service.png)
+![EKS_Ingress_Deploy_INITIAL](images/EKS_Ingress_Deploy_INITIAL.png)
 
-The ingress doesn't have external traffic to the domain and need to update the A record for that:
+<br>
 
-Just ingress is not enough and we need to set up an ingress controller - we use Nginx ingress controller
+This Ingress will send traffic to the `digital-bank-api-service` defined as the service: 
 
-Nginx Ingress Controller
+<br>
 
-![alt text](images/nginx_ingress_controller.png)
+![EKS_Ingress_Sending_Traffic_A_RECORD_UPDATED](images/EKS_Ingress_Sending_Traffic_A_RECORD_UPDATED.png)
 
-![alt text](images/nginx_ingress_controller_RUN.png)
+<br>
 
-```shell
+The Nginx Ingress controller is a key component in Kubernetes that provides load balancing, reverse proxy, and advanced 
+routing capabilities for incoming traffic to services within the cluster. It acts as a single entry point, distributing 
+requests across multiple service replicas, handling TLS/SSL termination, supporting name-based virtual hosting, URL rewriting, 
+and integrating seamlessly with Kubernetes Services. By deploying a Nginx Ingress controller, you can simplify traffic management, 
+enhance security, and leverage advanced features for efficiently routing and exposing your applications to external clients.
+In the previous image, we had no ADDRESS for the Ingress, and we need to deploy the Nginx Ingress Controller for acquiring 
+ADDRESS that the host can direct traffic to. 
+
+
+<br>
+
+![Nginx_ingress_CONTROLLER](images/Nginx_ingress_CONTROLLER.png)
+
+<br>
+
+![Nginx_ingress_CONTROLLER_RUN](images/Nginx_ingress_CONTROLLER_RUN.png)
+
+<br>
+
+```textmate
 $ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/aws/deploy.yaml
 ```
 
-![alt text](images/ingress_class.png)
+<br>
 
-Copy the address above and paste to the A-record in the AWS route 53
+After the redeployment the Ingress, now we can see the `ADDRESS` and we can use that to update the A-record in the AWS Route 53. 
 
-In the K9s console check `ingressclass`
+![Nginx_ingress_CONTROLLER_AFTER_RUN](images/Nginx_ingress_CONTROLLER_AFTER_RUN.png)
 
-Provide the address of the Ingress to the A-record
+<br>
 
-![alt text](images/A-record_update_forIngress.png)
+![Route_53_A_Record_UPDATE_INGRESS](images/Route_53_A_Record_UPDATE_INGRESS.png)
 
-![alt text](images/ingress_update_check.png)
+<br>
 
-IngressClass resource in the Ingress YAML
+![INGRESS_Update_CHECK](images/INGRESS_Update_CHECK.png)
 
-![alt text](images/ingress_class_updated.png)
+<br>
 
-Update the ingress.yaml file:
+`IngressClass` is a Kubernetes resource that allows you to define and specify different types of Ingress controllers within 
+a cluster, enabling the simultaneous operation of multiple Ingress controllers. This is particularly useful in multi-tenant 
+environments, where different teams or applications require different ingress configurations or features, as well as scenarios 
+involving vendor-specific features, migration strategies, or testing and experimentation with various Ingress controllers. 
+By leveraging IngressClass, you can better manage and organize Ingress resources, isolate traffic and configurations, and 
+take advantage of the capabilities offered by different Ingress controller vendors.
+
+<br>
+
+![Ingress_Class_UPDATED](images/Ingress_Class_UPDATED.png)
+
+<br>
+
+This is the updated `eks/ingress.yaml` with the info about the `IngressClass` provided, and we can see the class of the Ingress
+is changed to `Nginx`:
+
+<br>
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: IngressClass
 metadata:
@@ -759,33 +933,55 @@ spec:
                   number: 80
 ```
 
-$ kubectl apply -f eks/ingress.yaml
+<br>
 
-The class of the ingress is changed to Nginx
+```textmate
+$ kubectl apply -f eks/ingress.yaml
+```
+<br>
+
+
+
+--- Enable TLS and Certificate 
+
+
 
 Make the Client/Server communication secure using TLS
-
-URL YT: <https://youtu.be/-f4Gbk-U758>
-
-SITE: <https://letsencrypt.org/>
-
 Should only be use if the DNS provider has an API to update the records
 
+
+DNS-01 Challenge
 ![alt text](images/dns-01_challenge.png)
 
 HTTP 01 Challenge
 
 ![alt text](images/http-01_challenge.png)
 
+
+URL YT: <https://youtu.be/-f4Gbk-U758>
+
+SITE: <https://letsencrypt.org/>
+
+
+
+
 Install Kubernetes cert manager
 
-```shell
+<br>
+
+```textmate
+
 $ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.5/cert-manager.yaml
 ```
 
-![alt text](images/cert_manager_pods.png)
+<br>
 
-```shell
+![EKS_Cert_Manager_PODS](images/EKS_Cert_Manager_PODS.png)
+
+<br>
+
+
+```textmate
 $ kubectl get pods --namespace cert-manager
 
 NAME                                       READY   STATUS    RESTARTS   AGE
@@ -795,7 +991,9 @@ cert-manager-webhook-cf8f9f895-8c7bd       1/1     Running   0          22h
 
 ```
 
-![alt text](images/create_Basic_ACME_Issuer.png)
+<br>
+
+![alt text](images/Create_Basic_ACME_ISSUER.png)
 
 Now, deploy the `eks/issuer.yaml` to the Kubernetes:
 
@@ -818,17 +1016,14 @@ spec:
             ingressClassName: nginx
 ```
 
-In the K9s console, check for the `>Clusterissuer`
-In the K9s console, check for the `>secrets` for its private keys
-
-The certificates are still empty:
-
-In the K9s console, check for the `>certificate` for its private keys
-In the K9s console, check for the `>certificaterequest` for its private keys
 
 Update the ingress to find the certificate:
 
+
+<br>
+
 ```yaml
+
 spec:
   controller: k8s.io/ingress-nginx
 ---
@@ -857,23 +1052,65 @@ spec:
       secretName: digital-bank-api-cert
 ```
 
+<br>
+
 Now we can check that the TLS is enabled
 
-![alt text](images/tls.png)
+<br>
+
+![TLS](images/TLS.png)
 
 <br>
 
-![alt text](images/certificates.png)
+![alt text](images/Certificates.png)
 
 <br>
 
-![alt text](images/all.png)
-
-![alt text](images/443.png)
+![alt text](images/Certificate_ISSUED.png)
 
 <br>
 
-![alt text](images/request.png)
+![alt text](images/TLS_HTTPS_Enabled.png)
+
+<br>
+
+![alt text](images/Postman_Requests_WORKING.png)
+
+<br>
+
+
+
+### K9s 
+
+```textmate
+$ brew install k9s 
+```
+
+In the K9s console, check for the `>Clusterissuer`
+In the K9s console, check for the `>secrets` for its private keys
+
+The certificates are still empty:
+
+In the K9s console, check for the `>certificate` for its private keys
+In the K9s console, check for the `>certificaterequest` for its private keys
+
+
+In the K9s console, use:
+
+```textmate
+$ configmap
+```
+
+
+Delete the existing deployments in the k9s and then <d>
+
+
+```textmate
+$ deployments 
+$ services
+```
+
+
 
 
 
