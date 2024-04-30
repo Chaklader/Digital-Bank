@@ -360,12 +360,14 @@ merging changes into the main branch.
 
 <br>
 
-## Deployment via GitHub Actions
+### Deployment via GitHub Actions
 
+<br>
 
 We have GitHub Action workflow created in the file named `.github/workflows/deploy.yaml` which is designed to run unit tests for
 a Go project. The initial version is to create the docker image in the ECR and provided below:
 
+<br>
 
 ```yaml
 
@@ -610,11 +612,11 @@ spec:
 
 <br>
 
-![alt text](images/Deployed_EKS_Cluster.png)
+![Deployed_EKS_Cluster](images/Deployed_EKS_Cluster.png)
 
 <br>
 
-![alt text](images/Deployed_EKS_Cluster_APPEND.png)
+![Deployed_EKS_Cluster_APPEND](images/Deployed_EKS_Cluster_APPEND.png)
 
 <br>
 
@@ -752,17 +754,17 @@ specified IP address, allowing visitors to access the website or application hos
 
 <br>
 
-![alt text](images/Route_53_A_Record_CREATE.png)
+![Route_53_A_Record_CREATE](images/Route_53_A_Record_CREATE.png)
 
 <br>
 
-![alt text](images/Route_53_DASHBOARD.png)
+![Route_53_DASHBOARD](images/Route_53_DASHBOARD.png)
 
 <br>
 
 [//]: # (TODO: The image above needs update with the A Record)
 
-![alt text](images/EKS_Service_URL_NS_LOOKUP_After_A_RECORD.png)
+![EKS_Service_URL_NS_LOOKUP_After_A_RECORD](images/EKS_Service_URL_NS_LOOKUP_After_A_RECORD.png)
 
 <br>
 
@@ -832,7 +834,7 @@ We have ClusterIP in the deployed service by now, and we can look for service an
 
 <br>
 
-![alt text](images/EKS_Service_ClusterIP.png)
+![EKS_Service_ClusterIP](images/EKS_Service_ClusterIP.png)
 
 <br>
 
@@ -941,36 +943,143 @@ $ kubectl apply -f eks/ingress.yaml
 <br>
 
 
+### TLS 
 
---- Enable TLS and Certificate 
+<br>
 
+Transport Layer Security (TLS) is a cryptographic protocol that provides secure communication over a computer network. 
+It is the successor to the Secure Sockets Layer (SSL) protocol and is widely used to secure internet traffic, including 
+web browsing, email, instant messaging, and voice over IP (VoIP). TLS ensures the confidentiality, integrity, and authenticity 
+of data transmitted between two parties, preventing eavesdropping, tampering, and impersonation attacks.
 
+TLS operates at the application layer of the OSI model and relies on a combination of symmetric and asymmetric cryptography. 
+When a TLS connection is established, the client and server perform a handshake to negotiate the cryptographic algorithms, 
+exchange keys, and authenticate each other's identities. The handshake process typically involves the following steps:
 
-Make the Client/Server communication secure using TLS
-Should only be use if the DNS provider has an API to update the records
+<br>
 
+1. The client sends a "ClientHello" message to the server, specifying the TLS version, supported cipher suites, and a 4
+random value.
+2. The server responds with a "ServerHello" message, selecting the TLS version and cipher suite to be used, and sends 
+its own random value.
+3. The server sends its digital certificate, which contains its public key and is signed by a trusted Certificate Authority 
+(CA).
+4. The client verifies the server's certificate by checking the CA's digital signature and ensuring the certificate is 
+valid and not expired or revoked.
+5. The client generates a random "premaster secret," encrypts it with the server's public key (obtained from the certificate), 
+and sends it to the server.
+6. The client and server use the premaster secret, along with the random values exchanged earlier, to derive a shared "master 
+secret" using a key derivation function.
+7. The client and server use the master secret to generate symmetric session keys for encrypting and authenticating the 
+application data.
+8. The client and server exchange "Finished" messages, which are encrypted and authenticated using the session keys, to 
+verify that the handshake was successful and not tampered with.
 
-DNS-01 Challenge
-![alt text](images/dns-01_challenge.png)
+<br>
 
-HTTP 01 Challenge
+Once the handshake is complete, the client and server can securely exchange application data using the symmetric session 
+keys. The data is encrypted using algorithms like AES (Advanced Encryption Standard) and authenticated using message 
+authentication codes (MACs) like HMAC (Hash-based Message Authentication Code).
 
-![alt text](images/http-01_challenge.png)
+Certificate Authorities (CAs) play a crucial role in the TLS ecosystem by issuing and managing digital certificates. A CA 
+is a trusted third-party entity that verifies the identity of certificate applicants and signs their certificates using 
+the CA's private key. The CA's public key is widely distributed and trusted by client software (like web browsers) as part 
+of their root certificate store.
 
+When a client receives a server's certificate during the TLS handshake, it checks the certificate's validity by verifying 
+the CA's digital signature. If the signature is valid and the CA is trusted, the client can be confident that the server's 
+public key belongs to the entity named in the certificate. This process helps prevent man-in-the-middle attacks, where an 
+attacker tries to impersonate the server.
 
-URL YT: <https://youtu.be/-f4Gbk-U758>
+CAs are responsible for thoroughly verifying the identity of certificate applicants before issuing certificates. They follow 
+strict procedures, such as checking legal documents, domain ownership, and other relevant information. CAs also maintain 
+certificate revocation lists (CRLs) and provide online certificate status protocol (OCSP) services to allow clients to 
+check if a certificate has been revoked.
 
-SITE: <https://letsencrypt.org/>
-
-
-
-
-Install Kubernetes cert manager
+In summary, TLS provides secure communication by encrypting and authenticating data exchanged between clients and servers. 
+It relies on digital certificates issued by trusted CAs to verify the identities of the communicating parties. The combination 
+of TLS and CAs creates a secure and trustworthy environment for online transactions and communication, protecting sensitive 
+information from unauthorized access and tampering. 
 
 <br>
 
 ```textmate
+HTTPS = HTTP + TLS
+SMPTS = SMPT + TLS
+FTPS = FTP + TLS  
+```
 
+<br>
+
+`Let's Encrypt` is a popular certificate authority that provides free SSL/TLS certificates to help secure websites and 
+promote the adoption of HTTPS. They offer two main types of challenges for domain validation: the DNS-01 challenge and 
+the HTTP-01 challenge. These challenges are used to verify that the person requesting the certificate has control over 
+the domain they are trying to secure.
+
+**DNS-01 Challenge:**
+
+<br>
+
+The DNS-01 challenge involves proving domain ownership by adding a specific TXT record to the domain's DNS configuration. 
+Here's how it works:
+
+<br>
+
+- When you request a certificate from Let's Encrypt using the DNS-01 challenge, their servers generate a unique token 
+for your domain.
+- You are required to create a TXT record in your domain's DNS settings with a specific format that includes the token 
+provided by Let's Encrypt.
+- Let's Encrypt's servers will then query your domain's DNS to verify the presence of the expected TXT record.
+- If the TXT record is found and matches the expected value, Let's Encrypt considers the challenge satisfied and proceeds 
+with issuing the certificate.
+
+<br>
+
+The DNS-01 challenge is useful when you have access to the DNS management of your domain and can add TXT records. It allows 
+for issuing certificates for wildcard domains (e.g., *.example.com) and can be completed without requiring direct access 
+to the web server.
+
+<br>
+
+2. HTTP-01 Challenge:
+   The HTTP-01 challenge involves proving domain ownership by serving a specific file on your web server. Here's how it works:
+
+<br>
+
+- When you request a certificate from Let's Encrypt using the HTTP-01 challenge, their servers generate a unique token 
+for your domain.
+- You are required to create a file on your web server at a specific URL path (e.g., http://example.com/.well-known/acme-challenge/token) 
+containing the token value.
+- Let's Encrypt's servers will then make an HTTP request to the specified URL on your domain to verify the presence of 
+the expected file and token.
+- If the file is found and contains the expected token value, Let's Encrypt considers the challenge satisfied and proceeds 
+with issuing the certificate.
+
+<br>
+
+The HTTP-01 challenge is useful when you have direct control over the web server hosting your domain. It requires the ability 
+to serve specific files on your web server and ensure they are accessible over HTTP. Both the DNS-01 and HTTP-01 challenges 
+provide secure ways to validate domain ownership before issuing SSL/TLS certificates. They help prevent unauthorized parties 
+from obtaining certificates for domains they do not control. Let's Encrypt's certification process is fully automated using 
+the ACME (Automated Certificate Management Environment) protocol. You can use ACME clients, such as Certbot, to automatically 
+handle the challenge process and retrieve certificates from Let's Encrypt.
+
+It's important to note that the specific steps and configurations required to complete these challenges may vary depending 
+on your DNS provider and web server setup. Let's Encrypt provides detailed documentation and community support to guide users 
+through the process of obtaining and renewing certificates using these challenges.
+
+<br>
+
+To automate the management of TLS certificates inside Kubernetes clusters, we will use Kubernetes cert-manager which is an 
+open-source tool. It simplifies the process of requesting, renewing, and using SSL/TLS certificates for secure communication 
+within a Kubernetes environment. cert-manager integrates seamlessly with Kubernetes resources, supports various certificate 
+authorities and sources, automatically renews certificates before expiration, provides fine-grained certificate management 
+policies, offers high availability deployment, and includes Prometheus monitoring for tracking certificate lifecycle events.
+We can use the command below to install Kubernetes `cert-manager`: 
+
+<br>
+
+```textmate
 $ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.5/cert-manager.yaml
 ```
 
@@ -982,6 +1091,7 @@ $ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/downloa
 
 
 ```textmate
+
 $ kubectl get pods --namespace cert-manager
 
 NAME                                       READY   STATUS    RESTARTS   AGE
@@ -993,11 +1103,17 @@ cert-manager-webhook-cf8f9f895-8c7bd       1/1     Running   0          22h
 
 <br>
 
-![alt text](images/Create_Basic_ACME_ISSUER.png)
+To automate the process of obtaining and renewing SSL/TLS certificates from ACME-compliant Certificate Authorities like 
+Let's Encrypt, we will use The ACME (Automatic Certificate Management Environment) issuer in cert-manager. It handles 
+the entire lifecycle, including generating the private key and CSR, proving domain ownership through challenge mechanisms, 
+submitting the CSR to the ACME server, receiving the signed certificate, and automatically renewing the certificate before 
+expiration, eliminating the need for manual certificate management within Kubernetes clusters. For this purpose, we need 
+to deploy the `eks/issuer.yaml` to the Kubernetes:
 
-Now, deploy the `eks/issuer.yaml` to the Kubernetes:
+<br>
 
 ```yaml
+
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -1014,11 +1130,13 @@ spec:
       - http01:
           ingress:
             ingressClassName: nginx
+
 ```
 
+<br>
 
-Update the ingress to find the certificate:
-
+However, before we deploy the `eks/issuer.yaml`, we need to update the `eks/ingress.yaml` to find the certificate
+and redeploy it and then, we can proceed to deploy the `eks/issuer.yaml`: 
 
 <br>
 
@@ -1054,7 +1172,17 @@ spec:
 
 <br>
 
-Now we can check that the TLS is enabled
+
+```textmate
+
+$ kubectl apply -f eks/ingress.yaml
+ 
+$ kubectl apply -f eks/issuer.yaml 
+```
+
+<br>
+
+Now, in the `K9s` console, we can check that the TLS is enabled:
 
 <br>
 
@@ -1079,36 +1207,6 @@ Now we can check that the TLS is enabled
 <br>
 
 
-
-### K9s 
-
-```textmate
-$ brew install k9s 
-```
-
-In the K9s console, check for the `>Clusterissuer`
-In the K9s console, check for the `>secrets` for its private keys
-
-The certificates are still empty:
-
-In the K9s console, check for the `>certificate` for its private keys
-In the K9s console, check for the `>certificaterequest` for its private keys
-
-
-In the K9s console, use:
-
-```textmate
-$ configmap
-```
-
-
-Delete the existing deployments in the k9s and then <d>
-
-
-```textmate
-$ deployments 
-$ services
-```
 
 
 
