@@ -67,6 +67,7 @@ func runDBMigration(migrationURL string, dbSource string) {
 
 func runGinServer(config util.Config, store db.Store) {
 	server, err := api.NewServer(config, store)
+
 	if err != nil {
 		log.Fatal().Err(err).Msg("The GIN server is unable to create ...")
 	}
@@ -75,17 +76,21 @@ func runGinServer(config util.Config, store db.Store) {
 	signal.Notify(serverChannel, interruptSignals...)
 
 	go func() {
-		if err := server.Start(config.HTTPServerAddress); err != nil && err != http.ErrServerClosed {
+		if err := server.Start(); err != nil && err != http.ErrServerClosed {
 			log.Fatal().Err(err).Msg("The GIN server is unable to run ....")
+			return
 		}
 	}()
+
+	log.Info().Msg("Listening and serving HTTP on 0.0.0.0:8080")
 
 	sig := <-serverChannel
 	log.Info().Msgf("Received signal %s, gracefully shutting down...", sig)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := server.Stop(ctx, config.HTTPServerAddress); err != nil {
+
+	if err := server.Stop(ctx); err != nil {
 		log.Fatal().Err(err).Msg("Failed to gracefully stop server")
 	}
 }

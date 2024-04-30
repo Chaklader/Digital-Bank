@@ -18,6 +18,7 @@ type Server struct {
 	store      db.Store
 	tokenMaker token.Maker
 	router     *gin.Engine
+	httpServer *http.Server
 }
 
 func NewServer(config util.Config, store db.Store) (*Server, error) {
@@ -26,10 +27,16 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		return nil, fmt.Errorf("cannot create token maker: %w", err)
 	}
 
+	router := gin.Default()
+
 	server := &Server{
 		config:     config,
 		store:      store,
 		tokenMaker: tokenMaker,
+		httpServer: &http.Server{
+			Addr:    config.HTTPServerAddress,
+			Handler: router,
+		},
 	}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
@@ -41,12 +48,12 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		}
 	}
 
-	server.setupRouter()
+	server.setupRouter(router)
 	return server, nil
 }
 
-func (server *Server) setupRouter() {
-	router := gin.Default()
+func (server *Server) setupRouter(router *gin.Engine) {
+
 	router.Use(faviconMiddleware)
 
 	router.POST("/users", server.createUser)
@@ -63,19 +70,21 @@ func (server *Server) setupRouter() {
 	server.router = router
 }
 
-func (server *Server) Start(address string) error {
-	return server.router.Run(address)
+func (server *Server) Start() error {
+	return server.httpServer.ListenAndServe()
 }
 
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
 }
 
-func (server *Server) Stop(ctx context.Context, HttpAddress string) error {
+func (server *Server) Stop(ctx context.Context) error {
+
 	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	if err := server.router.Run(HttpAddress); err != nil && err != http.ErrServerClosed {
+	err := server.httpServer.Shutdown(ctxTimeout)
+	if err != nil {
 		return err
 	}
 
