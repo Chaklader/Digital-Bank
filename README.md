@@ -144,7 +144,9 @@ secrets as below:
 
 
 ```textmate
+
 $ aws secretsmanager get-secret-value --secret-id Digital_Bank
+
 {
     "ARN": "arn:aws:secretsmanager:us-east-1:366655867831:secret:Digital_Bank-UZysxN",
     "Name": "Digital_Bank",
@@ -163,6 +165,7 @@ below that will be included in the `deployment.yaml` pipeline.
 <br>
 
 ```textmate
+
 $ aws secretsmanager get-secret-value --secret-id Digital_Bank --query SecretString --output text | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]'
 
 DB_SOURCE=postgresql://root:XXXXXXXXX@digital-bank.czzl3uwtdaas.us-east-1.rds.amazonaws.com:5432/digital_bank
@@ -175,6 +178,7 @@ REDIS_ADDRESS=0.0.0.0:6379
 EMAIL_SENDER_NAME=Digital_Bank
 EMAIL_SENDER_ADDRESS=digitalbanktest@gmail.com
 EMAIL_SENDER_PASSWORD=jekfcygyenvzekke
+
 ```
 
 <br>
@@ -261,7 +265,7 @@ below.
 
 <br>
 
-![alt text](images/EKS_Cluster.png)
+![EKS_Cluster](images/EKS_Cluster.png)
 
 <br>
 
@@ -273,7 +277,7 @@ necessary permissions for the EKS cluster to ensure secure and controlled access
 
 <br>
 
-![alt text](images/EKS_Cluster_Service_Role.png)
+![EKS_Cluster_Service_Role](images/EKS_Cluster_Service_Role.png)
 
 <br>
 
@@ -297,7 +301,7 @@ capacity based on the workload demands. We can use the `Add Node Group` button b
 
 <br>
 
-![alt text](images/EKS_Add_Worker_Node.png)
+![EKS_Add_Worker_Node](images/EKS_Add_Worker_Node.png)
 
 <br>
 
@@ -309,11 +313,11 @@ For the EKS worker node group, we need to create a new IAM role named `AWSEKSNod
 
 <br>
 
-![alt text](images/EKS_Worker_Node_IAM.png)
+![EKS_Worker_Node_IAM](images/EKS_Worker_Node_IAM.png)
 
 <br>
 
-![alt text](images/EKS_Worker_Node_IAM_APPEND.png)
+![EKS_Worker_Node_IAM_APPEND](images/EKS_Worker_Node_IAM_APPEND.png)
 
 <br>
 
@@ -338,11 +342,11 @@ while `c3.4xlarge` can support `234` pods.
 
 <br>
 
-![alt text](images/EKS_Pods_Per_EC2_Instance.png)
+![EKS_Pods_Per_EC2_Instance](images/EKS_Pods_Per_EC2_Instance.png)
 
 <br>
 
-![alt text](images/EKS_Pods_Per_EC2_Instance_APPEND.png)
+![EKS_Pods_Per_EC2_Instance_APPEND](images/EKS_Pods_Per_EC2_Instance_APPEND.png)
 
 <br>
 
@@ -416,7 +420,7 @@ After we push the code to the `main` branch, the CI/CD pipeline will run and doc
 
 <br>
 
-![alt text](images/ECR_Docker_Image.png)
+![ECR_Docker_Image](images/ECR_Docker_Image.png)
 
 <br>
 
@@ -430,16 +434,24 @@ $ aws ecr get-login-password \
     --password-stdin 366655867831.dkr.ecr.us-east-1.amazonaws.com
 ```
 
+<br>
+
 Run the image locally and can test it using the Postman:  
+
+<br>
 
 ```textmate
 $ docker pull 366655867831.dkr.ecr.us-east-1.amazonaws.com/digitalbank:latest
 $ docker run -p 8080:8080 366655867831.dkr.ecr.us-east-1.amazonaws.com/digitalbank:latest
 ```
 
+<br>
+
 Now, we can check the AWS user with the command and see the current username is `GitHUB-CI`
 
-```shell
+<br>
+
+```textmate
 $ aws sts get-caller-identity
 
 {
@@ -469,6 +481,7 @@ We need to update the configuration and use the correct context before we procee
 
 ```textmate
 $ aws eks update-kubeconfig --name digital-bank --region us-east-1
+
 Updated context arn:aws:eks:us-east-1:366655867831:cluster/digital-bank in /Users/chaklader/.kube/config
 ```
 
@@ -476,6 +489,7 @@ Updated context arn:aws:eks:us-east-1:366655867831:cluster/digital-bank in /User
 
 ```textmate
 $ kubectl config use-context arn:aws:eks:us-east-1:366655867831:cluster/digital-bank
+
 Switched to context "arn:aws:eks:us-east-1:366655867831:cluster/digital-bank".
 ```
 
@@ -520,6 +534,7 @@ users:
 
 ```textmate
 $ kubectl cluster-info
+
 Kubernetes control plane is running at https://E44AED5442512EC56EA2BFBD88920895.gr7.us-east-1.eks.amazonaws.com
 CoreDNS is running at https://E44AED5442512EC56EA2BFBD88920895.gr7.us-east-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
@@ -529,11 +544,14 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 <br>
 
 ```textmate
+
 $ kubectl get pods
+
 NAME                                           READY   STATUS    RESTARTS   AGE
 cm-acme-http-solver-gxzpw                      1/1     Running   0          2d3h
 digital-bank-api-deployment-57c7b975cf-g29j7   1/1     Running   0          2d6h
 digital-bank-api-deployment-57c7b975cf-p69qr   1/1     Running   0          2d6h
+
 ```
 
 
@@ -575,12 +593,6 @@ Now, the user `GitHUB-CI` is ready to manage the deployment process and the clus
 as before with the default user. We run the `eks/deployment.yaml` for deployment as provided. We can see the deployment 
 the `K9s` console as provided. 
 
-```textmate
-$ kubectl apply -f eks/deployment.yaml
-
-deployment.apps/digital-bank-api-deployment created
-```
-
 <br>
 
 ```yaml
@@ -609,6 +621,15 @@ spec:
             - containerPort: 8080
 ```
 
+
+<br>
+
+
+```textmate
+$ kubectl apply -f eks/deployment.yaml
+
+deployment.apps/digital-bank-api-deployment created
+```
 
 <br>
 
@@ -676,26 +697,37 @@ service/digital-bank-api-service configured
 
 <br>
 
-![alt text](images/EKS_Service.png)
+![EKS_Service](images/EKS_Service.png)
 
 <br>
 
-In the image above, we can see the service is deployed but the `TYPE` is `ClusterIP` and there is `EXTERNAL-IP` so the Kubernetes
+In the image above, we can see the service is deployed but the `TYPE` is `ClusterIP` and there is no `EXTERNAL-IP` so the Kubernetes
 resources can't be access from the outside by us. We can change the `TYPE` to `LoadBalancer`, re-deploy and acquire an `EXTERNAL-IP`
-identified as `acefda17bec1049e48640f98a99c2653-885218934.us-east-1.elb.amazonaws.com` below and this host name can be used 
+identified as `a12f9d210e5314f4689fdbc07eaa3073-1246380703.us-east-1.elb.amazonaws.com` below and this host name can be used 
 for regular requests as we did with the `localhost`. 
 
 <br>
 
-![alt text](images/EKS_Service_APPEND.png)
+![EKS_Service_APPEND](images/EKS_Service_APPEND.png)
 
 <br>
 
-![alt text](images/EKS_Service_URL_NS_LOOKUP_Before_A_RECORD.png)
+```textmate
+
+$ nslookup a12f9d210e5314f4689fdbc07eaa3073-1246380703.us-east-1.elb.amazonaws.com
+Server:		192.168.0.1
+Address:	192.168.0.1#53
+
+Non-authoritative answer:
+Name:	a12f9d210e5314f4689fdbc07eaa3073-1246380703.us-east-1.elb.amazonaws.com
+Address: 52.70.11.252
+Name:	a12f9d210e5314f4689fdbc07eaa3073-1246380703.us-east-1.elb.amazonaws.com
+Address: 54.147.84.250
+```
 
 <br>
 
-![alt text](images/EKS_Service_URL.png)
+![EKS_Service_URL](images/EKS_Service_URL.png)
 
 <br>
 
@@ -758,19 +790,30 @@ specified IP address, allowing visitors to access the website or application hos
 
 <br>
 
-![Route_53_DASHBOARD](images/Route_53_DASHBOARD.png)
+Now, we can use the new A Record and run the `nslookup` to get the same request as before:
 
 <br>
 
-[//]: # (TODO: The image above needs update with the A Record)
+```textmate
 
-![EKS_Service_URL_NS_LOOKUP_After_A_RECORD](images/EKS_Service_URL_NS_LOOKUP_After_A_RECORD.png)
+$ nslookup api.digitalbanktoday.com
+Server:		192.168.0.1
+Address:	192.168.0.1#53
+
+Non-authoritative answer:
+Name:	api.digitalbanktoday.com
+Address: 54.147.84.250
+Name:	api.digitalbanktoday.com
+Address: 52.70.11.252
+
+```
 
 <br>
 
 
 ### Kubernetes Ingress
 
+<br>
 
 Kubernetes Ingress is a collection of rules that allow inbound connections to reach the cluster services. It acts as a 
 single entry point for incoming traffic, routing it to the appropriate services based on configured rules. Ingress is 
@@ -794,19 +837,22 @@ spec:
       port: 80
       targetPort: 8080
   type: ClusterIP
+
 ```
 
 We need to deploy the `eks/service.yaml` and then, need to deploy the `eks/ingress.yaml` as provided below:
 
+
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: digital-bank-ingress
+   name: digital-bank-ingress
 spec:
   rules:
     #    This is from the A record 
-    - host: "api.digital-bank.org"
+    - host: "api.digitalbanktoday.com"
       http:
         paths:
           - pathType: Prefix
@@ -830,33 +876,27 @@ $ kubectl apply -f eks/ingress.yaml
 
 <br>
 
-We have ClusterIP in the deployed service by now, and we can look for service and ingress in the K9s console:
+
+However, when I tried to deploy the `eks/ingress.yaml`, I had the error message service "ingress-nginx-controller-admission" 
+not found suggests that the Ingress controller is not deployed or not running correctly in your Kubernetes cluster. 
 
 <br>
 
-![EKS_Service_ClusterIP](images/EKS_Service_ClusterIP.png)
+```textmate
+$ kubectl apply -f eks/ingress.yaml 
+
+Error from server (InternalError): error when creating "eks/ingress.yaml": Internal error occurred: failed calling webhook "validate.nginx.ingress.kubernetes.io": failed to call webhook: Post "https://ingress-nginx-controller-admission.ingress-nginx.svc:443/networking/v1/ingresses?timeout=10s": service "ingress-nginx-controller-admission" not found
+```
 
 <br>
 
-![EKS_Ingress_Deploy_INITIAL](images/EKS_Ingress_Deploy_INITIAL.png)
-
-<br>
-
-This Ingress will send traffic to the `digital-bank-api-service` defined as the service: 
-
-<br>
-
-![EKS_Ingress_Sending_Traffic_A_RECORD_UPDATED](images/EKS_Ingress_Sending_Traffic_A_RECORD_UPDATED.png)
-
-<br>
-
-The Nginx Ingress controller is a key component in Kubernetes that provides load balancing, reverse proxy, and advanced 
-routing capabilities for incoming traffic to services within the cluster. It acts as a single entry point, distributing 
-requests across multiple service replicas, handling TLS/SSL termination, supporting name-based virtual hosting, URL rewriting, 
-and integrating seamlessly with Kubernetes Services. By deploying a Nginx Ingress controller, you can simplify traffic management, 
+The Nginx Ingress controller is a key component in Kubernetes that provides load balancing, reverse proxy, and advanced
+routing capabilities for incoming traffic to services within the cluster. It acts as a single entry point, distributing
+requests across multiple service replicas, handling TLS/SSL termination, supporting name-based virtual hosting, URL rewriting,
+and integrating seamlessly with Kubernetes Services. By deploying a Nginx Ingress controller, we can simplify traffic management,
 enhance security, and leverage advanced features for efficiently routing and exposing your applications to external clients.
-In the previous image, we had no ADDRESS for the Ingress, and we need to deploy the Nginx Ingress Controller for acquiring 
-ADDRESS that the host can direct traffic to. 
+To resolve the issue and acquire and external ADDRESS for the Ingress, and we need to deploy the Nginx Ingress Controller 
+for acquiring ADDRESS that the host can direct traffic to.
 
 
 <br>
@@ -870,8 +910,76 @@ ADDRESS that the host can direct traffic to.
 <br>
 
 ```textmate
+
 $ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/aws/deploy.yaml
 ```
+
+<br>
+
+
+Now, I tried to redeploy the `eks/ingress.yaml` again with valid `IngressClass` and this time the issue is resolved:
+
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+   name: digital-bank-ingress
+   annotations:
+      kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    #    This is from the A record 
+    - host: "api.digitalbanktoday.com"
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                #  This comes from the metadata of the service
+                name: digital-bank-api-service
+                port:
+                  #                  the port is from the service.yaml file 
+                  number: 80
+```
+
+
+```textmate
+
+$ kubectl get pods --namespace ingress-nginx
+NAME                                        READY   STATUS      RESTARTS   AGE
+ingress-nginx-admission-create-b9pcg        0/1     Completed   0          85s
+ingress-nginx-admission-patch-zmd29         0/1     Completed   0          83s
+ingress-nginx-controller-57b7568757-c55jn   1/1     Running     0          86s
+
+
+$ kubectl logs --namespace ingress-nginx ingress-nginx-controller-57b7568757-c55jn 
+-------------------------------------------------------------------------------
+NGINX Ingress controller
+  Release:       v1.10.1
+  Build:         4fb5aac1dd3669daa3a14d9de3e3cdb371b4c518
+  Repository:    https://github.com/kubernetes/ingress-nginx
+  nginx version: nginx/1.25.3
+
+-------------------------------------------------------------------------------
+
+W0430 09:33:58.011834       6 client_config.go:618] Neither --kubeconfig nor --master was specified.  Using the inClusterConfig.  This might not work.
+I0430 09:33:58.012090       6 main.go:205] "Creating API client" host="https://10.100.0.1:443"
+I0430 09:33:58.029570       6 main.go:248] "Running in Kubernetes cluster" major="1" minor="29+" git="v1.29.3-eks-adc7111" state="clean" commit="c8f33fb3fdd7ee39809c260233424fb73ce1893b" platform="linux/amd64"
+I0430 09:33:58.506157       6 main.go:101] "SSL fake certificate created" file="/etc/ingress-controller/ssl/default-fake-certificate.pem"
+I0430 09:33:58.542723       6 ssl.go:535] "loading tls certificate" path="/usr/local/certificates/cert" key="/usr/local/certificates/key"
+
+
+$ kubectl apply -f eks/ingress.yaml 
+ingress.networking.k8s.io/digital-bank-ingress created
+
+```
+
+<br>
+
+<br>
+
 
 <br>
 
@@ -885,7 +993,29 @@ After the redeployment the Ingress, now we can see the `ADDRESS` and we can use 
 
 <br>
 
-![INGRESS_Update_CHECK](images/INGRESS_Update_CHECK.png)
+```textmate
+$ nslookup api.digitalbanktoday.com
+Server:		192.168.0.1
+Address:	192.168.0.1#53
+
+Non-authoritative answer:
+Name:	api.digitalbanktoday.com
+Address: 52.23.145.115
+Name:	api.digitalbanktoday.com
+Address: 35.172.20.12
+```
+
+<br>
+
+The requests to the server is working fine as before, and we can check that using the Postman:
+
+<br>
+
+![Route_53_A_Record_UPDATE_INGRESS](images/Route_53_A_Record_UPDATE_INGRESS_POSTMAN_Works.png)
+
+<br>
+
+
 
 <br>
 
@@ -1016,7 +1146,9 @@ promote the adoption of HTTPS. They offer two main types of challenges for domai
 the HTTP-01 challenge. These challenges are used to verify that the person requesting the certificate has control over 
 the domain they are trying to secure.
 
-**DNS-01 Challenge:**
+<br>
+
+**DNS-01 Challenge**
 
 <br>
 
@@ -1041,8 +1173,11 @@ to the web server.
 
 <br>
 
-2. HTTP-01 Challenge:
-   The HTTP-01 challenge involves proving domain ownership by serving a specific file on your web server. Here's how it works:
+**HTTP-01 Challenge**
+
+<br>
+
+The HTTP-01 challenge involves proving domain ownership by serving a specific file on your web server. Here's how it works:
 
 <br>
 
@@ -1095,9 +1230,9 @@ $ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/downloa
 $ kubectl get pods --namespace cert-manager
 
 NAME                                       READY   STATUS    RESTARTS   AGE
-cert-manager-7ddd8cdb9f-bxlsn              1/1     Running   0          22h
-cert-manager-cainjector-57cd76c845-2lq2b   1/1     Running   0          22h
-cert-manager-webhook-cf8f9f895-8c7bd       1/1     Running   0          22h
+cert-manager-7ddd8cdb9f-wfjwd              1/1     Running   0          6s
+cert-manager-cainjector-57cd76c845-bpgvh   1/1     Running   0          7s
+cert-manager-webhook-cf8f9f895-4ws8x       0/1     Running   0          5s
 
 ```
 
@@ -1140,10 +1275,16 @@ and redeploy it and then, we can proceed to deploy the `eks/issuer.yaml`:
 
 <br>
 
+
 ```yaml
 
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: nginx
 spec:
   controller: k8s.io/ingress-nginx
+  
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -1154,7 +1295,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: "api.digital-bank.org"
+    - host: "api.digitalbanktoday.com"
       http:
         paths:
           - pathType: Prefix
@@ -1168,13 +1309,13 @@ spec:
     - hosts:
         - api.digital-bank.org
       secretName: digital-bank-api-cert
+
 ```
 
 <br>
 
 
 ```textmate
-
 $ kubectl apply -f eks/ingress.yaml
  
 $ kubectl apply -f eks/issuer.yaml 
@@ -1184,13 +1325,10 @@ $ kubectl apply -f eks/issuer.yaml
 
 Now, in the `K9s` console, we can check that the TLS is enabled:
 
-<br>
-
-![TLS](images/TLS.png)
 
 <br>
 
-![alt text](images/Certificates.png)
+![Certificates](images/Certificates.png)
 
 <br>
 
@@ -1200,11 +1338,13 @@ Now, in the `K9s` console, we can check that the TLS is enabled:
 
 ![alt text](images/TLS_HTTPS_Enabled.png)
 
-<br>
-
-![alt text](images/Postman_Requests_WORKING.png)
 
 <br>
+
+The request should work between the client and server securely with the host `api.digitalbanktoday.com` as before. 
+
+
+
 
 
 
