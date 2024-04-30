@@ -250,7 +250,7 @@ in the AWS cloud infrastructure.
 <br>
 
 
-## Elastic Kubernetes Service (EKS)
+### Elastic Kubernetes Service (EKS)
 
 <br>
 
@@ -902,10 +902,6 @@ for acquiring ADDRESS that the host can direct traffic to.
 <br>
 
 ![Nginx_ingress_CONTROLLER](images/Nginx_ingress_CONTROLLER.png)
-
-<br>
-
-![Nginx_ingress_CONTROLLER_RUN](images/Nginx_ingress_CONTROLLER_RUN.png)
 
 <br>
 
