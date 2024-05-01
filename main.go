@@ -3,14 +3,19 @@ package main
 import (
 	"errors"
 	"github.com/Chaklader/DigitalBank/gapi"
+	"github.com/Chaklader/DigitalBank/mail"
 	"github.com/Chaklader/DigitalBank/pb"
 	"github.com/Chaklader/DigitalBank/worker"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/hibiken/asynq"
+	"github.com/rakyll/statik/fs"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/encoding/protojson"
 	"net"
 
 	"context"
@@ -151,101 +156,101 @@ func runGrpcServer(
 	})
 }
 
-//func runTaskProcessor(
-//	ctx context.Context,
-//	waitGroup *errgroup.Group,
-//	config util.Config,
-//	redisOpt asynq.RedisClientOpt,
-//	store db.Store,
-//) {
-//	mailer := mail.NewGmailSender(config.EmailSenderName, config.EmailSenderAddress, config.EmailSenderPassword)
-//	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store, mailer)
-//
-//	log.Info().Msg("start task processor")
-//	err := taskProcessor.Start()
-//	if err != nil {
-//		log.Fatal().Err(err).Msg("failed to start task processor")
-//	}
-//
-//	waitGroup.Go(func() error {
-//		<-ctx.Done()
-//		log.Info().Msg("graceful shutdown task processor")
-//
-//		taskProcessor.Shutdown()
-//		log.Info().Msg("task processor is stopped")
-//
-//		return nil
-//	})
-//}
+func runTaskProcessor(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
+	config util.Config,
+	redisOpt asynq.RedisClientOpt,
+	store db.Store,
+) {
+	mailer := mail.NewGmailSender(config.EmailSenderName, config.EmailSenderAddress, config.EmailSenderPassword)
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store, mailer)
 
-//func runGatewayServer(
-//	ctx context.Context,
-//	waitGroup *errgroup.Group,
-//	config util.Config,
-//	store db.Store,
-//	taskDistributor worker.TaskDistributor,
-//) {
-//	server, err := gapi.NewServer(config, store, taskDistributor)
-//	if err != nil {
-//		log.Fatal().Err(err).Msg("cannot create server")
-//	}
-//
-//	jsonOption := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
-//		MarshalOptions: protojson.MarshalOptions{
-//			UseProtoNames: true,
-//		},
-//		UnmarshalOptions: protojson.UnmarshalOptions{
-//			DiscardUnknown: true,
-//		},
-//	})
-//
-//	grpcMux := runtime.NewServeMux(jsonOption)
-//
-//	err = pb.RegisterDigitalBankServer(ctx, grpcMux, server)
-//	if err != nil {
-//		log.Fatal().Err(err).Msg("cannot register handler server")
-//	}
-//
-//	mux := http.NewServeMux()
-//	mux.Handle("/", grpcMux)
-//
-//	statikFS, err := fs.New()
-//	if err != nil {
-//		log.Fatal().Err(err).Msg("cannot create statik fs")
-//	}
-//
-//	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
-//	mux.Handle("/swagger/", swaggerHandler)
-//
-//	httpServer := &http.Server{
-//		Handler: gapi.HttpLogger(mux),
-//		Addr:    config.HTTPServerAddress,
-//	}
-//
-//	waitGroup.Go(func() error {
-//		log.Info().Msgf("start HTTP gateway server at %s", httpServer.Addr)
-//		err = httpServer.ListenAndServe()
-//		if err != nil {
-//			if errors.Is(err, http.ErrServerClosed) {
-//				return nil
-//			}
-//			log.Error().Err(err).Msg("HTTP gateway server failed to serve")
-//			return err
-//		}
-//		return nil
-//	})
-//
-//	waitGroup.Go(func() error {
-//		<-ctx.Done()
-//		log.Info().Msg("graceful shutdown HTTP gateway server")
-//
-//		err := httpServer.Shutdown(context.Background())
-//		if err != nil {
-//			log.Error().Err(err).Msg("failed to shutdown HTTP gateway server")
-//			return err
-//		}
-//
-//		log.Info().Msg("HTTP gateway server is stopped")
-//		return nil
-//	})
-//}
+	log.Info().Msg("start task processor")
+	err := taskProcessor.Start()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to start task processor")
+	}
+
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+		log.Info().Msg("graceful shutdown task processor")
+
+		taskProcessor.Shutdown()
+		log.Info().Msg("task processor is stopped")
+
+		return nil
+	})
+}
+
+func runGatewayServer(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
+	config util.Config,
+	store db.Store,
+	taskDistributor worker.TaskDistributor,
+) {
+	server, err := gapi.NewServer(config, store, taskDistributor)
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot create server")
+	}
+
+	jsonOption := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+		MarshalOptions: protojson.MarshalOptions{
+			UseProtoNames: true,
+		},
+		UnmarshalOptions: protojson.UnmarshalOptions{
+			DiscardUnknown: true,
+		},
+	})
+
+	grpcMux := runtime.NewServeMux(jsonOption)
+	err = pb.RegisterDigitalBankHandlerServer(ctx, grpcMux, server)
+
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot register handler server")
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/", grpcMux)
+
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot create statik fs")
+	}
+
+	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
+	mux.Handle("/swagger/", swaggerHandler)
+
+	httpServer := &http.Server{
+		Handler: gapi.HttpLogger(mux),
+		Addr:    config.HTTPServerAddress,
+	}
+
+	waitGroup.Go(func() error {
+		log.Info().Msgf("start HTTP gateway server at %s", httpServer.Addr)
+		err = httpServer.ListenAndServe()
+		if err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				return nil
+			}
+			log.Error().Err(err).Msg("HTTP gateway server failed to serve")
+			return err
+		}
+		return nil
+	})
+
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+		log.Info().Msg("graceful shutdown HTTP gateway server")
+
+		err := httpServer.Shutdown(context.Background())
+		if err != nil {
+			log.Error().Err(err).Msg("failed to shutdown HTTP gateway server")
+			return err
+		}
+
+		log.Info().Msg("HTTP gateway server is stopped")
+		return nil
+	})
+}
