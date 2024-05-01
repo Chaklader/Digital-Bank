@@ -26,8 +26,9 @@ migratedown:
 	yes | migrate -path db/migration -database "$(DB_URL)" -verbose down
 
 migratedown1:
-	migrate -path db/migration -database "$(DB_URL)" -verbose down 1
+	yes | migrate -path db/migration -database "$(DB_URL)" -verbose down 1
 
+# $ migrate create -ext sql -dir db/migration -seq add_sessions
 new_migration:
 	migrate create -ext sql -dir db/migration -seq $(name)
 
