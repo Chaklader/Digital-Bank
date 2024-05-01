@@ -2,12 +2,12 @@ package worker
 
 import (
 	"context"
+	db "github.com/Chaklader/DigitalBank/db/sqlc"
+	"github.com/Chaklader/DigitalBank/mail"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
-	db "github.com/techschool/simplebank/db/sqlc"
-	"github.com/techschool/simplebank/mail"
 )
 
 const (
@@ -53,10 +53,11 @@ func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store, mailer
 	}
 }
 
+// TODO: send verification email to the user
 func (processor *RedisTaskProcessor) Start() error {
 	mux := asynq.NewServeMux()
 
-	mux.HandleFunc(TaskSendVerifyEmail, processor.ProcessTaskSendVerifyEmail)
+	//mux.HandleFunc(TaskSendVerifyEmail, processor.ProcessTaskSendVerifyEmail)
 
 	return processor.server.Start(mux)
 }
