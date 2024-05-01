@@ -50,7 +50,7 @@ server:
 #mockgen --destination db/mock/store.go github.com/Chaklader/DigitalBank/db/sqlc Store
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/Chaklader/DigitalBank/db/sqlc Store
-	#mockgen -package mockwk -destination worker/mock/distributor.go github.com/Chaklader/DigitalBank/worker TaskDistributor
+	mockgen -package mockwk -destination worker/mock/distributor.go github.com/Chaklader/DigitalBank/worker TaskDistributor
 
 proto:
 	rm -f pb/*.go
@@ -60,7 +60,8 @@ proto:
 	--grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \
 	--openapiv2_out=doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=digital_bank \
 	proto/*.proto
-	statik -src=./doc/swagger -dest=./doc
+	statik -src=./doc/swagger -dest=./doc -f
+
 
 evans:
 	evans --host localhost --port 9090 -r repl

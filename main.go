@@ -11,6 +11,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/hibiken/asynq"
+	"github.com/rakyll/statik/fs"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -31,6 +32,8 @@ import (
 
 	db "github.com/Chaklader/DigitalBank/db/sqlc"
 	_ "github.com/lib/pq"
+
+	_ "github.com/Chaklader/DigitalBank/doc/statik"
 )
 
 var interruptSignals = []os.Signal{
@@ -229,13 +232,13 @@ func runGatewayServer(
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcMux)
 
-	//statikFS, err := fs.New()
-	//if err != nil {
-	//	log.Fatal().Err(err).Msg("cannot create statik fs")
-	//}
-	//
-	//swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
-	//mux.Handle("/swagger/", swaggerHandler)
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot create statik fs")
+	}
+
+	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
+	mux.Handle("/swagger/", swaggerHandler)
 
 	httpServer := &http.Server{
 		Handler: gapi.HttpLogger(mux),
