@@ -22,7 +22,7 @@ func TestAuthMiddleware(t *testing.T) {
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
-			name: OK,
+			name: util.OK,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, username, role, time.Minute)
 			},
@@ -31,7 +31,7 @@ func TestAuthMiddleware(t *testing.T) {
 			},
 		},
 		{
-			name: NoAuthorization,
+			name: util.NoAuthorization,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 
 			},
@@ -40,7 +40,7 @@ func TestAuthMiddleware(t *testing.T) {
 			},
 		},
 		{
-			name: UnsupportedAuthorization,
+			name: util.UnsupportedAuthorization,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, "unsupported", username, role, time.Minute)
 			},
@@ -49,7 +49,7 @@ func TestAuthMiddleware(t *testing.T) {
 			},
 		},
 		{
-			name: InvalidAuthorizationFormat,
+			name: util.InvalidAuthorizationFormat,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, "", username, role, time.Minute)
 			},
@@ -58,7 +58,7 @@ func TestAuthMiddleware(t *testing.T) {
 			},
 		},
 		{
-			name: ExpiredToken,
+			name: util.ExpiredToken,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, username, role, -time.Minute)
 			},

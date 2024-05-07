@@ -10,13 +10,11 @@ import (
 )
 
 const createVerifyEmail = `-- name: CreateVerifyEmail :one
-INSERT INTO verify_emails (
-    username,
-    email,
-    secret_code
-) VALUES (
-    $1, $2, $3
-) RETURNING id, username, email, secret_code, is_used, created_at, expired_at
+INSERT INTO verify_emails (username,
+                           email,
+                           secret_code)
+VALUES ($1, $2, $3)
+RETURNING id, username, email, secret_code, is_used, created_at, expired_at
 `
 
 type CreateVerifyEmailParams struct {
@@ -42,13 +40,11 @@ func (q *Queries) CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailPa
 
 const updateVerifyEmail = `-- name: UpdateVerifyEmail :one
 UPDATE verify_emails
-SET
-    is_used = TRUE
-WHERE
-    id = $1
-    AND secret_code = $2
-    AND is_used = FALSE
-    AND expired_at > now()
+SET is_used = TRUE
+WHERE id = $1
+  AND secret_code = $2
+  AND is_used = FALSE
+  AND expired_at > now()
 RETURNING id, username, email, secret_code, is_used, created_at, expired_at
 `
 

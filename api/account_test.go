@@ -32,7 +32,7 @@ func TestGetAccountAPI(t *testing.T) {
 		checkResponse func(t *testing.T, responseRecorder *httptest.ResponseRecorder)
 	}{
 		{
-			name:      OK,
+			name:      util.OK,
 			accountID: account.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, user.Role, time.Minute)
@@ -49,7 +49,7 @@ func TestGetAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name:      Unauthorized,
+			name:      util.Unauthorized,
 			accountID: account.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, "unauthorized_user", util.DepositorRole, time.Minute)
@@ -65,7 +65,7 @@ func TestGetAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name:      NoAuthorization,
+			name:      util.NoAuthorization,
 			accountID: account.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 			},
@@ -79,7 +79,7 @@ func TestGetAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name:      NotFound,
+			name:      util.NotFound,
 			accountID: account.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, user.Role, time.Minute)
@@ -96,7 +96,7 @@ func TestGetAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name:      InternalError,
+			name:      util.InternalError,
 			accountID: account.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, user.Role, time.Minute)
@@ -112,7 +112,7 @@ func TestGetAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name:      InvalidID,
+			name:      util.InvalidID,
 			accountID: 0,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, user.Role, time.Minute)
@@ -164,7 +164,7 @@ func TestCreateAccountAPI(t *testing.T) {
 		checkResponse func(responseRecorder *httptest.ResponseRecorder)
 	}{
 		{
-			name: OK,
+			name: util.OK,
 			body: gin.H{
 				"currency": account.Currency,
 			},
@@ -189,7 +189,7 @@ func TestCreateAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name: NoAuthorization,
+			name: util.NoAuthorization,
 			body: gin.H{
 				"currency": account.Currency,
 			},
@@ -205,7 +205,7 @@ func TestCreateAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name: InternalError,
+			name: util.InternalError,
 			body: gin.H{
 				"currency": account.Currency,
 			},
@@ -223,7 +223,7 @@ func TestCreateAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name: InvalidCurrency,
+			name: util.InvalidCurrency,
 			body: gin.H{
 				"currency": "invalid",
 			},
@@ -291,7 +291,7 @@ func TestListAccountsAPI(t *testing.T) {
 		checkResponse func(recoder *httptest.ResponseRecorder)
 	}{
 		{
-			name: OK,
+			name: util.OK,
 			query: Query{
 				pageID:   1,
 				pageSize: n,
@@ -317,7 +317,7 @@ func TestListAccountsAPI(t *testing.T) {
 			},
 		},
 		{
-			name: NoAuthorization,
+			name: util.NoAuthorization,
 			query: Query{
 				pageID:   1,
 				pageSize: n,
@@ -334,7 +334,7 @@ func TestListAccountsAPI(t *testing.T) {
 			},
 		},
 		{
-			name: InternalError,
+			name: util.InternalError,
 			query: Query{
 				pageID:   1,
 				pageSize: n,
@@ -353,7 +353,7 @@ func TestListAccountsAPI(t *testing.T) {
 			},
 		},
 		{
-			name: InvalidPageID,
+			name: util.InvalidPageID,
 			query: Query{
 				pageID:   -1,
 				pageSize: n,
@@ -371,7 +371,7 @@ func TestListAccountsAPI(t *testing.T) {
 			},
 		},
 		{
-			name: InvalidPageSize,
+			name: util.InvalidPageSize,
 			query: Query{
 				pageID:   1,
 				pageSize: 100000,

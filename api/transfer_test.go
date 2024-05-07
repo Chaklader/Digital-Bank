@@ -41,7 +41,7 @@ func TestTransferAPI(t *testing.T) {
 		checkResponse func(recoder *httptest.ResponseRecorder)
 	}{
 		{
-			name: "OK",
+			name: util.OK,
 			body: gin.H{
 				"from_account_id": account1.ID,
 				"to_account_id":   account2.ID,
@@ -67,7 +67,7 @@ func TestTransferAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "UnauthorizedUser",
+			name: util.UnauthorizedUser,
 			body: gin.H{
 				"from_account_id": account1.ID,
 				"to_account_id":   account2.ID,
@@ -87,7 +87,7 @@ func TestTransferAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "NoAuthorization",
+			name: util.NoAuthorization,
 			body: gin.H{
 				"from_account_id": account1.ID,
 				"to_account_id":   account2.ID,
@@ -105,7 +105,7 @@ func TestTransferAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "FromAccountNotFound",
+			name: util.FromAccountNotFound,
 			body: gin.H{
 				"from_account_id": account1.ID,
 				"to_account_id":   account2.ID,
@@ -125,7 +125,7 @@ func TestTransferAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "ToAccountNotFound",
+			name: util.ToAccountNotFound,
 			body: gin.H{
 				"from_account_id": account1.ID,
 				"to_account_id":   account2.ID,
@@ -145,7 +145,7 @@ func TestTransferAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "FromAccountCurrencyMismatch",
+			name: util.FromAccountCurrencyMismatch,
 			body: gin.H{
 				"from_account_id": account3.ID,
 				"to_account_id":   account2.ID,
@@ -165,7 +165,7 @@ func TestTransferAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "ToAccountCurrencyMismatch",
+			name: util.ToAccountCurrencyMismatch,
 			body: gin.H{
 				"from_account_id": account1.ID,
 				"to_account_id":   account3.ID,
@@ -185,7 +185,7 @@ func TestTransferAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InvalidCurrency",
+			name: util.InvalidCurrency,
 			body: gin.H{
 				"from_account_id": account1.ID,
 				"to_account_id":   account2.ID,
@@ -204,7 +204,7 @@ func TestTransferAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "NegativeAmount",
+			name: util.NegativeAmount,
 			body: gin.H{
 				"from_account_id": account1.ID,
 				"to_account_id":   account2.ID,
@@ -223,7 +223,7 @@ func TestTransferAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "GetAccountError",
+			name: util.GetAccountError,
 			body: gin.H{
 				"from_account_id": account1.ID,
 				"to_account_id":   account2.ID,
@@ -242,7 +242,7 @@ func TestTransferAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "TransferTxError",
+			name: util.TransferTxError,
 			body: gin.H{
 				"from_account_id": account1.ID,
 				"to_account_id":   account2.ID,

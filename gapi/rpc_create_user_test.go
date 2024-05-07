@@ -1,9 +1,11 @@
 package gapi
 
 import (
+	"context"
 	//"context"
 	"database/sql"
 	"fmt"
+
 	mockdb "github.com/Chaklader/DigitalBank/db/mock"
 	db "github.com/Chaklader/DigitalBank/db/sqlc"
 	"github.com/Chaklader/DigitalBank/pb"
@@ -14,8 +16,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -79,7 +81,7 @@ func TestCreateUserAPI(t *testing.T) {
 		checkResponse func(t *testing.T, res *pb.CreateUserResponse, err error)
 	}{
 		{
-			name: "OK",
+			name: util.OK,
 			req: &pb.CreateUserRequest{
 				Username: user.Username,
 				Password: password,
@@ -117,7 +119,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InternalError",
+			name: util.InternalError,
 			req: &pb.CreateUserRequest{
 				Username: user.Username,
 				Password: password,
@@ -142,7 +144,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "DuplicateUsername",
+			name: util.DuplicateUsername,
 			req: &pb.CreateUserRequest{
 				Username: user.Username,
 				Password: password,
@@ -167,7 +169,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InvalidEmail",
+			name: util.InvalidEmail,
 			req: &pb.CreateUserRequest{
 				Username: user.Username,
 				Password: password,
@@ -192,25 +194,24 @@ func TestCreateUserAPI(t *testing.T) {
 		},
 	}
 
-	// TODO: make sure the tests are running fine
 	for i := range testCases {
-		//tc := testCases[i]
-		_ = testCases[i]
+		tc := testCases[i]
 
-		//t.Run(tc.name, func(t *testing.T) {
-		//	storeCtrl := gomock.NewController(t)
-		//	defer storeCtrl.Finish()
-		//	store := mockdb.NewMockStore(storeCtrl)
-		//
-		//	taskCtrl := gomock.NewController(t)
-		//	defer taskCtrl.Finish()
-		//	taskDistributor := mockwk.NewMockTaskDistributor(taskCtrl)
-		//
-		//	tc.buildStubs(store, taskDistributor)
-		//	server := newTestServer(t, store, taskDistributor)
-		//
-		//	res, err := server.CreateUser(context.Background(), tc.req)
-		//	tc.checkResponse(t, res, err)
-		//})
+		t.Run(tc.name, func(t *testing.T) {
+
+			storeCtrl := gomock.NewController(t)
+			defer storeCtrl.Finish()
+			store := mockdb.NewMockStore(storeCtrl)
+
+			taskCtrl := gomock.NewController(t)
+			defer taskCtrl.Finish()
+			taskDistributor := mockwk.NewMockTaskDistributor(taskCtrl)
+
+			tc.buildStubs(store, taskDistributor)
+			server := newTestServer(t, store, taskDistributor)
+
+			res, err := server.CreateUser(context.Background(), tc.req)
+			tc.checkResponse(t, res, err)
+		})
 	}
 }

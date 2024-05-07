@@ -17,6 +17,7 @@ func GrpcLogger(
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (resp interface{}, err error) {
+
 	startTime := time.Now()
 	result, err := handler(ctx, req)
 	duration := time.Since(startTime)

@@ -13,17 +13,15 @@ import (
 )
 
 const createSession = `-- name: CreateSession :one
-INSERT INTO sessions (
-  id,
-  username,
-  refresh_token,
-  user_agent,
-  client_ip,
-  is_blocked,
-  expires_at
-) VALUES (
-  $1, $2, $3, $4, $5, $6, $7
-) RETURNING id, username, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at
+INSERT INTO sessions (id,
+                      username,
+                      refresh_token,
+                      user_agent,
+                      client_ip,
+                      is_blocked,
+                      expires_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, username, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at
 `
 
 type CreateSessionParams struct {
@@ -61,8 +59,10 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 }
 
 const getSession = `-- name: GetSession :one
-SELECT id, username, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at FROM sessions
-WHERE id = $1 LIMIT 1
+SELECT id, username, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at
+FROM sessions
+WHERE id = $1
+LIMIT 1
 `
 
 func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (Session, error) {
