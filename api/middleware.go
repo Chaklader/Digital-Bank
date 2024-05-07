@@ -32,7 +32,7 @@ func authMiddlewareImpl(ctx *gin.Context, tokenMaker token.Maker) {
 
 	fields := strings.Fields(authorizationHeader)
 	if len(fields) < 2 {
-		err := errors.New("invalid authorization header format")
+		err := errors.New("Invalid authorization header format")
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}

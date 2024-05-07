@@ -29,10 +29,10 @@ func TestGetAccountAPI(t *testing.T) {
 		accountID     int64
 		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
-		checkResponse func(t *testing.T, recoder *httptest.ResponseRecorder)
+		checkResponse func(t *testing.T, responseRecorder *httptest.ResponseRecorder)
 	}{
 		{
-			name:      "OK",
+			name:      OK,
 			accountID: account.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, user.Role, time.Minute)
@@ -49,7 +49,7 @@ func TestGetAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name:      "UnauthorizedUser",
+			name:      Unauthorized,
 			accountID: account.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, "unauthorized_user", util.DepositorRole, time.Minute)
@@ -65,7 +65,7 @@ func TestGetAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name:      "NoAuthorization",
+			name:      NoAuthorization,
 			accountID: account.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 			},
@@ -79,7 +79,7 @@ func TestGetAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name:      "NotFound",
+			name:      NotFound,
 			accountID: account.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, user.Role, time.Minute)
@@ -96,7 +96,7 @@ func TestGetAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name:      "InternalError",
+			name:      InternalError,
 			accountID: account.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, user.Role, time.Minute)
@@ -112,7 +112,7 @@ func TestGetAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name:      "InvalidID",
+			name:      InvalidID,
 			accountID: 0,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, user.Role, time.Minute)
@@ -161,10 +161,10 @@ func TestCreateAccountAPI(t *testing.T) {
 		body          gin.H
 		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
-		checkResponse func(recoder *httptest.ResponseRecorder)
+		checkResponse func(responseRecorder *httptest.ResponseRecorder)
 	}{
 		{
-			name: "OK",
+			name: OK,
 			body: gin.H{
 				"currency": account.Currency,
 			},
@@ -189,7 +189,7 @@ func TestCreateAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "NoAuthorization",
+			name: NoAuthorization,
 			body: gin.H{
 				"currency": account.Currency,
 			},
@@ -205,7 +205,7 @@ func TestCreateAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InternalError",
+			name: InternalError,
 			body: gin.H{
 				"currency": account.Currency,
 			},
@@ -223,7 +223,7 @@ func TestCreateAccountAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InvalidCurrency",
+			name: InvalidCurrency,
 			body: gin.H{
 				"currency": "invalid",
 			},
@@ -291,7 +291,7 @@ func TestListAccountsAPI(t *testing.T) {
 		checkResponse func(recoder *httptest.ResponseRecorder)
 	}{
 		{
-			name: "OK",
+			name: OK,
 			query: Query{
 				pageID:   1,
 				pageSize: n,
@@ -317,7 +317,7 @@ func TestListAccountsAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "NoAuthorization",
+			name: NoAuthorization,
 			query: Query{
 				pageID:   1,
 				pageSize: n,
@@ -334,7 +334,7 @@ func TestListAccountsAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InternalError",
+			name: InternalError,
 			query: Query{
 				pageID:   1,
 				pageSize: n,
@@ -353,7 +353,7 @@ func TestListAccountsAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InvalidPageID",
+			name: InvalidPageID,
 			query: Query{
 				pageID:   -1,
 				pageSize: n,
@@ -371,7 +371,7 @@ func TestListAccountsAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InvalidPageSize",
+			name: InvalidPageSize,
 			query: Query{
 				pageID:   1,
 				pageSize: 100000,

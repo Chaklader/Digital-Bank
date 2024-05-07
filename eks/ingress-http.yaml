@@ -19,7 +19,7 @@ spec:
                   number: 80
   tls:
     - hosts:
-        - api.digitalbanktest.com
+        - api.digitalbanktoday.com
       secretName: digital-bank-api-cert
 
 

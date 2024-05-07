@@ -54,10 +54,10 @@ func TestCreateUserAPI(t *testing.T) {
 		name          string
 		body          gin.H
 		buildStubs    func(store *mockdb.MockStore)
-		checkResponse func(recoder *httptest.ResponseRecorder)
+		checkResponse func(responseRecorder *httptest.ResponseRecorder)
 	}{
 		{
-			name: "OK",
+			name: OK,
 			body: gin.H{
 				"username":  user.Username,
 				"password":  password,
@@ -81,7 +81,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InternalError",
+			name: InternalError,
 			body: gin.H{
 				"username":  user.Username,
 				"password":  password,
@@ -99,7 +99,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "DuplicateUsername",
+			name: DuplicateUsername,
 			body: gin.H{
 				"username":  user.Username,
 				"password":  password,
@@ -117,7 +117,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InvalidUsername",
+			name: InvalidUsername,
 			body: gin.H{
 				"username":  "invalid-user#1",
 				"password":  password,
@@ -134,7 +134,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InvalidEmail",
+			name: InvalidEmail,
 			body: gin.H{
 				"username":  user.Username,
 				"password":  password,
@@ -151,7 +151,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "TooShortPassword",
+			name: TooShortPassword,
 			body: gin.H{
 				"username":  user.Username,
 				"password":  "123",
@@ -206,7 +206,7 @@ func TestLoginUserAPI(t *testing.T) {
 		checkResponse func(recoder *httptest.ResponseRecorder)
 	}{
 		{
-			name: "OK",
+			name: OK,
 			body: gin.H{
 				"username": user.Username,
 				"password": password,
@@ -225,7 +225,7 @@ func TestLoginUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "UserNotFound",
+			name: UserNotFound,
 			body: gin.H{
 				"username": "NotFound",
 				"password": password,
@@ -241,7 +241,7 @@ func TestLoginUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "IncorrectPassword",
+			name: IncorrectPassword,
 			body: gin.H{
 				"username": user.Username,
 				"password": "incorrect",
@@ -257,7 +257,7 @@ func TestLoginUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InternalError",
+			name: InternalError,
 			body: gin.H{
 				"username": user.Username,
 				"password": password,
@@ -273,7 +273,7 @@ func TestLoginUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InvalidUsername",
+			name: InvalidUsername,
 			body: gin.H{
 				"username": "invalid-user#1",
 				"password": password,

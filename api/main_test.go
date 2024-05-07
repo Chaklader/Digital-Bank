@@ -3,7 +3,9 @@ package api
 import (
 	db "github.com/Chaklader/DigitalBank/db/sqlc"
 	"github.com/Chaklader/DigitalBank/util"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
+	"os"
 	"testing"
 	"time"
 )
@@ -18,4 +20,10 @@ func newTestServer(t *testing.T, store db.Store) *Server {
 	require.NoError(t, err)
 
 	return server
+}
+
+func TestMain(m *testing.M) {
+	gin.SetMode(gin.TestMode)
+
+	os.Exit(m.Run())
 }
