@@ -27,4 +27,7 @@ const (
 	NegativeAmount              = "NegativeAmount"
 	GetAccountError             = "GetAccountError"
 	TransferTxError             = "TransferTxError"
+
+	OtherDepositorCannotUpdateThisUserInfo = "OtherDepositorCannotUpdateThisUserInfo"
+	BankerCanUpdateUserInfo                = "BankerCanUpdateUserInfo"
 )

@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -35,7 +35,7 @@ func TestUpdateUserAPI(t *testing.T) {
 		checkResponse func(t *testing.T, res *pb.UpdateUserResponse, err error)
 	}{
 		{
-			name: "OK",
+			name: util.OK,
 			req: &pb.UpdateUserRequest{
 				Username: user.Username,
 				FullName: &newName,
@@ -80,7 +80,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "BankerCanUpdateUserInfo",
+			name: util.BankerCanUpdateUserInfo,
 			req: &pb.UpdateUserRequest{
 				Username: user.Username,
 				FullName: &newName,
@@ -125,7 +125,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "OtherDepositorCannotUpdateThisUserInfo",
+			name: util.OtherDepositorCannotUpdateThisUserInfo,
 			req: &pb.UpdateUserRequest{
 				Username: user.Username,
 				FullName: &newName,
@@ -147,7 +147,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "UserNotFound",
+			name: util.UserNotFound,
 			req: &pb.UpdateUserRequest{
 				Username: user.Username,
 				FullName: &newName,
@@ -170,7 +170,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InvalidEmail",
+			name: util.InvalidEmail,
 			req: &pb.UpdateUserRequest{
 				Username: user.Username,
 				FullName: &newName,
@@ -192,7 +192,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "ExpiredToken",
+			name: util.ExpiredToken,
 			req: &pb.UpdateUserRequest{
 				Username: user.Username,
 				FullName: &newName,
@@ -214,7 +214,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "NoAuthorization",
+			name: util.NoAuthorization,
 			req: &pb.UpdateUserRequest{
 				Username: user.Username,
 				FullName: &newName,
@@ -238,20 +238,19 @@ func TestUpdateUserAPI(t *testing.T) {
 	}
 
 	for i := range testCases {
-		//tc := testCases[i]
-		_ = testCases[i]
+		tc := testCases[i]
 
-		//t.Run(tc.name, func(t *testing.T) {
-		//	storeCtrl := gomock.NewController(t)
-		//	defer storeCtrl.Finish()
-		//	store := mockdb.NewMockStore(storeCtrl)
-		//
-		//	tc.buildStubs(store)
-		//	server := newTestServer(t, store, nil)
-		//
-		//	ctx := tc.buildContext(t, server.tokenMaker)
-		//	res, err := server.UpdateUser(ctx, tc.req)
-		//	tc.checkResponse(t, res, err)
-		//})
+		t.Run(tc.name, func(t *testing.T) {
+			storeCtrl := gomock.NewController(t)
+			defer storeCtrl.Finish()
+			store := mockdb.NewMockStore(storeCtrl)
+
+			tc.buildStubs(store)
+			server := newTestServer(t, store, nil)
+
+			ctx := tc.buildContext(t, server.tokenMaker)
+			res, err := server.UpdateUser(ctx, tc.req)
+			tc.checkResponse(t, res, err)
+		})
 	}
 }

@@ -21,6 +21,7 @@ func (server *Server) VerifyEmail(ctx context.Context, req *pb.VerifyEmailReques
 		EmailId:    req.GetEmailId(),
 		SecretCode: req.GetSecretCode(),
 	})
+
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to verify email")
 	}
